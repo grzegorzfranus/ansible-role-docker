@@ -1,0 +1,19 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{{ ansible_managed | comment }}
+[Unit]
+Description=Run Docker prune periodically
+
+[Timer]
+{% if docker_prune_frequency == 'daily' %}
+OnCalendar=daily
+{% elif docker_prune_frequency == 'weekly' %}
+OnCalendar=weekly
+{% elif docker_prune_frequency == 'monthly' %}
+OnCalendar=monthly
+{% else %}
+OnCalendar=weekly
+{% endif %}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

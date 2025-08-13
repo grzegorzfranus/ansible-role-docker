@@ -1,0 +1,3 @@
+---
+# Debian 12 (bookworm)
+docker_apt_codename: "bookworm"

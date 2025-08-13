@@ -1,0 +1,70 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Installation Tasks
+# =============================================================================
+# This file installs Docker Engine packages from official repositories,
+# including optional Buildx and Compose plugins.
+#
+# Flow:
+# 1. Install packages on Debian/Ubuntu
+# 2. Install packages on EL (Rocky)
+# 3. Ensure docker group exists and add users
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Install Packages on Debian/Ubuntu
+# -----------------------------------------------------------------------------
+- name: 📦 Docker | install | Install Docker packages (Debian/Ubuntu)
+  become: true
+  ansible.builtin.apt:
+    name: >-
+      {{ [
+          'docker-ce', 'docker-ce-cli', 'containerd.io'
+        ]
+        + (['docker-compose-plugin'] if docker_install_compose_plugin | bool else [])
+        + (['docker-buildx-plugin'] if docker_install_buildx_plugin | bool else [])
+        + docker_extra_packages
+      }}
+    state: "{{ docker_package_state }}"
+    update_cache: true
+  when: >
+    ansible_os_family | lower == "debian"
+
+# -----------------------------------------------------------------------------
+# 2. Install Packages on Enterprise Linux (Rocky)
+# -----------------------------------------------------------------------------
+- name: 📦 Docker | install | Install Docker packages (EL)
+  become: true
+  ansible.builtin.dnf:
+    name: >-
+      {{ [
+          'docker-ce', 'docker-ce-cli', 'containerd.io'
+        ]
+        + (['docker-compose-plugin'] if docker_install_compose_plugin | bool else [])
+        + (['docker-buildx-plugin'] if docker_install_buildx_plugin | bool else [])
+        + docker_extra_packages
+      }}
+    state: "{{ docker_package_state }}"
+  when: >
+    ansible_os_family | lower == "redhat"
+
+# -----------------------------------------------------------------------------
+# 3. Group Management
+# -----------------------------------------------------------------------------
+- name: 📦 Docker | install | Ensure docker group exists
+  become: true
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: 📦 Docker | install | Add users to docker group
+  become: true
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"
+  when: >
+    docker_users | length > 0

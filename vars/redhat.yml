@@ -1,0 +1,7 @@
+---
+# Enterprise Linux family defaults (Rocky, RHEL)
+# Adjust rsyslog-managed log file permissions to match distro conventions
+
+docker_rsyslog_log_file_owner: "root"
+docker_rsyslog_log_file_group: "root"
+docker_rsyslog_log_file_mode: "0600"

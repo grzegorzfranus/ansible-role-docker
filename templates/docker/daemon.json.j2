@@ -1,0 +1,22 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{
+  {%- set comma = joiner(",\n  ") -%}
+  {%- if docker_enable_tcp_socket -%}
+  {{ comma() }}"hosts": [
+    "unix:///var/run/docker.sock",
+    "tcp://{{ docker_tcp_listen }}"
+  ]
+  {%- endif -%}
+  {{ comma() }}"log-driver": "{{ docker_log_driver }}"
+  {{ comma() }}"log-opts": {
+    {%- for k, v in docker_log_opts.items() -%}
+    "{{ k }}": "{{ v }}"{%- if not loop.last -%},{%- endif -%}
+    {%- endfor -%}
+  }
+  {%- if docker_registry_mirrors | length > 0 -%}
+  {{ comma() }}"registry-mirrors": {{ docker_registry_mirrors | to_json }}
+  {%- endif -%}
+  {%- for k, v in docker_daemon_extra.items() -%}
+  {{ comma() }}"{{ k }}": {{ v | to_json }}
+  {%- endfor -%}
+}

@@ -1,0 +1,9 @@
+---
+# Ubuntu 22.04 (jammy)
+docker_apt_codename: "jammy"
+
+# Ensure rsyslog-managed docker log file has Ubuntu-conventional permissions
+# Owner: syslog, Group: adm, Mode: 0640
+docker_rsyslog_log_file_owner: "syslog"
+docker_rsyslog_log_file_group: "adm"
+docker_rsyslog_log_file_mode: "0640"

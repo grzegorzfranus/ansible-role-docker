@@ -1,0 +1,43 @@
+# =============================================================================
+# Ansible Role: Docker - Molecule Convergence Playbook
+# =============================================================================
+# Execute the Docker role in the test environment and ensure service starts.
+#
+# Flow:
+# 1. Update package cache
+# 2. Wait for systemd initialization
+# 3. Apply Docker role with defaults
+# =============================================================================
+
+---
+- name: 🧪 Docker | molecule | Converge
+  hosts: all
+
+  pre_tasks:
+    - name: 🧪 Docker | molecule | converge | Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 600
+      changed_when: false
+      when: ansible_os_family == "Debian"
+
+    - name: 🧪 Docker | molecule | converge | Update dnf cache
+      ansible.builtin.dnf:
+        update_cache: true
+      changed_when: false
+      when: ansible_os_family == "RedHat"
+
+    - name: 🧪 Docker | molecule | converge | Wait for systemd to complete initialization
+      command: systemctl is-system-running
+      register: systemctl_status
+      until: >
+        'running' in systemctl_status.stdout or
+        'degraded' in systemctl_status.stdout
+      retries: 30
+      delay: 5
+      when: ansible_service_mgr == 'systemd'
+      changed_when: false
+      failed_when: systemctl_status.rc > 1
+
+  roles:
+    - role: ansible-role-docker

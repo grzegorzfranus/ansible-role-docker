@@ -1,0 +1,85 @@
+# =============================================================================
+# Ansible Role: Docker - Molecule Verification Playbook
+# =============================================================================
+# Verify installation and configuration:
+# - Packages installed
+# - Service enabled and running
+# - daemon.json content
+# - Socket permissions
+# =============================================================================
+
+---
+- name: 🧪 Docker | molecule | Verify Role
+  hosts: all
+  gather_facts: true
+
+  vars_files:
+    - ../../defaults/main.yml
+    - ../../vars/main.yml
+
+  tasks:
+    - name: 🧪 Docker | molecule | verify | Gather OS specific variables
+      include_vars: "{{ lookup('first_found', params) }}"
+      vars:
+        params:
+          files:
+            - "{{ ansible_facts['distribution'] | lower }}_{{ ansible_facts['distribution_version'] | lower }}.yml"
+            - "{{ ansible_facts['distribution'] | lower }}_{{ ansible_facts['distribution_major_version'] | lower }}.yml"
+            - "{{ ansible_facts['distribution'] | lower }}.yml"
+            - "{{ ansible_facts['os_family'] | lower }}_{{ ansible_facts['distribution_version'] | lower }}.yml"
+            - "{{ ansible_facts['os_family'] | lower }}_{{ ansible_facts['distribution_major_version'].split('.')[0] }}.yml"
+            - "{{ ansible_facts['os_family'] | lower }}.yml"
+            - "main.yml"
+          paths:
+            - "../../vars"
+
+    - name: 🧪 Docker | molecule | verify | Check docker package(s) present
+      ansible.builtin.package:
+        name: docker-ce
+        state: present
+      register: pkg_check
+      ignore_errors: true
+
+    - name: 🧪 Docker | molecule | verify | Docker service running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+      register: svc_check
+      ignore_errors: true
+
+    - name: 🧪 Docker | molecule | verify | Check daemon.json exists
+      ansible.builtin.stat:
+        path: /etc/docker/daemon.json
+      register: daemon_stat
+      ignore_errors: true
+
+    - name: 🧪 Docker | molecule | verify | Read daemon.json
+      ansible.builtin.slurp:
+        src: /etc/docker/daemon.json
+      register: daemon_slurp
+      when: daemon_stat.stat.exists
+
+    - name: 🧪 Docker | molecule | verify | Assert daemon.json basics
+      ansible.builtin.assert:
+        that:
+          - '"unix:///var/run/docker.sock" in (daemon_slurp.content | b64decode)'
+          - '"json-file" in (daemon_slurp.content | b64decode)'
+        success_msg: "daemon.json has expected defaults"
+      when: daemon_stat.stat.exists
+
+    - name: 🧪 Docker | molecule | verify | Check docker socket permissions
+      ansible.builtin.stat:
+        path: /var/run/docker.sock
+      register: sock_stat
+      ignore_errors: true
+
+    - name: 🧪 Docker | molecule | verify | Show summary
+      ansible.builtin.debug:
+        msg: |
+          Docker Verification Summary:
+          ----------------------------
+          Package Installed: {{ pkg_check.failed | default(true) | ternary('FAIL', 'PASS') }}
+          Service Running/Enabled: {{ svc_check.failed | default(true) | ternary('FAIL', 'PASS') }}
+          daemon.json Exists: {{ daemon_stat.stat.exists | default(false) | ternary('PASS', 'FAIL') }}
+          Socket Mode: {{ sock_stat.stat.mode | default('NA') }}

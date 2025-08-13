@@ -1,0 +1,50 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Prune Timer Tasks (Optional)
+# =============================================================================
+# This file configures a systemd timer and service to run `docker system prune`
+# periodically.
+#
+# Flow:
+# 1. Deploy systemd service unit
+# 2. Deploy systemd timer unit
+# 3. Enable and start timer
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Systemd Service Unit
+# -----------------------------------------------------------------------------
+- name: 🧹 Docker | prune | Deploy systemd service
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-prune.service.j2
+    dest: /etc/systemd/system/docker-prune.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: ["Docker | handlers | Systemd daemon-reload"]
+
+# -----------------------------------------------------------------------------
+# 2. Systemd Timer Unit
+# -----------------------------------------------------------------------------
+- name: 🧹 Docker | prune | Deploy systemd timer
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-prune.timer.j2
+    dest: /etc/systemd/system/docker-prune.timer
+    owner: root
+    group: root
+    mode: '0644'
+  notify: ["Docker | handlers | Systemd daemon-reload"]
+
+# -----------------------------------------------------------------------------
+# 3. Timer Enable/Start
+# -----------------------------------------------------------------------------
+- name: 🧹 Docker | prune | Enable and start timer
+  become: true
+  ansible.builtin.systemd:
+    name: docker-prune.timer
+    enabled: true
+    state: started

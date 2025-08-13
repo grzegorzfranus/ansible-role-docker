@@ -1,0 +1,9 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{{ ansible_managed | comment }}
+[Unit]
+Description=Docker system prune
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker system prune {{ docker_prune_flags }}

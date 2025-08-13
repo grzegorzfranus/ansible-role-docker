@@ -1,0 +1,68 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Backup Timer Tasks (Optional)
+# =============================================================================
+# This file configures a systemd timer and service to back up Docker
+# configuration and metadata into a versioned directory with retention policy.
+#
+# Flow:
+# 1. Ensure backup directory and script
+# 2. Deploy systemd service and timer units
+# 3. Enable and start timer
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Backup Directory and Script
+# -----------------------------------------------------------------------------
+- name: 💾 Docker | backup | Ensure backup directory exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ docker_backup_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: 💾 Docker | backup | Deploy backup script
+  become: true
+  ansible.builtin.template:
+    src: scripts/docker-backup.sh.j2
+    dest: /usr/local/bin/docker-backup
+    owner: root
+    group: root
+    mode: '0755'
+
+# -----------------------------------------------------------------------------
+# 2. Systemd Units
+# -----------------------------------------------------------------------------
+- name: 💾 Docker | backup | Deploy systemd service
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-backup.service.j2
+    dest: /etc/systemd/system/docker-backup.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: ["Docker | handlers | Systemd daemon-reload"]
+
+- name: 💾 Docker | backup | Deploy systemd timer
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-backup.timer.j2
+    dest: /etc/systemd/system/docker-backup.timer
+    owner: root
+    group: root
+    mode: '0644'
+  notify: ["Docker | handlers | Systemd daemon-reload"]
+
+# -----------------------------------------------------------------------------
+# 3. Timer Enable/Start
+# -----------------------------------------------------------------------------
+- name: 💾 Docker | backup | Enable and start timer
+  become: true
+  ansible.builtin.systemd:
+    name: docker-backup.timer
+    enabled: true
+    state: started

@@ -1,0 +1,60 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Logging Tasks (rsyslog + file)
+# =============================================================================
+# This file optionally captures dockerd journald logs into a dedicated file
+# managed by rsyslog, with rotation handled by logrotate.
+#
+# Flow:
+# 1. Ensure log directory exists
+# 2. Ensure log file exists with proper ownership/permissions
+# 3. Deploy rsyslog configuration and restart rsyslog
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Log Directory
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | logging | Ensure custom log directory exists (non-/var/log)
+  become: true
+  ansible.builtin.file:
+    path: "{{ docker_log_directory_path }}"
+    state: directory
+    owner: "{{ docker_rsyslog_log_file_owner }}"
+    group: "{{ docker_rsyslog_log_file_group }}"
+    mode: '0755'
+  when: >
+    docker_log_directory_path | length > 0 and docker_log_directory_path != '/var/log'
+
+# -----------------------------------------------------------------------------
+# 2. Log File
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | logging | Compute log file path
+  ansible.builtin.set_fact:
+    docker_log_file_path: >-
+      {{ (docker_log_directory_path | length > 0)
+          | ternary(docker_log_directory_path ~ '/docker.log', '/var/log/docker.log') }}
+
+- name: ⚙️ Docker | logging | Ensure log file exists with proper permissions
+  become: true
+  ansible.builtin.file:
+    path: "{{ docker_log_file_path }}"
+    state: touch
+    owner: "{{ docker_rsyslog_log_file_owner }}"
+    group: "{{ docker_rsyslog_log_file_group }}"
+    mode: "{{ docker_rsyslog_log_file_mode }}"
+
+# -----------------------------------------------------------------------------
+# 3. Rsyslog Configuration
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | logging | Configure rsyslog for Docker
+  become: true
+  ansible.builtin.template:
+    src: rsyslog/docker.conf.j2
+    dest: "/etc/rsyslog.d/{{ docker_rsyslog_conf_name }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - "Docker | handlers | Restart rsyslog service"

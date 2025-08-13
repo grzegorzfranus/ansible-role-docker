@@ -1,0 +1,37 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Auditd Tasks (Optional)
+# =============================================================================
+# This file optionally adds an auditd rule to monitor changes to
+# /var/run/docker.sock if auditd is present on the system.
+#
+# Flow:
+# 1. Detect auditctl availability
+# 2. Add rule file to monitor docker.sock
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Detect auditctl availability
+# -----------------------------------------------------------------------------
+- name: 🔒 Docker | audit | Check if auditctl exists
+  become: true
+  ansible.builtin.stat:
+    path: /sbin/auditctl
+  register: docker_auditctl
+
+# -----------------------------------------------------------------------------
+# 2. Configure rule file
+# -----------------------------------------------------------------------------
+- name: 🔒 Docker | audit | Configure audit rule for /var/run/docker.sock
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/audit/rules.d/docker.rules
+    state: present
+    create: true
+    line: "-w /var/run/docker.sock -p wa -k docker-sock"
+    mode: '0644'
+  when: >
+    docker_auditctl.stat.exists
+  notify: ["Docker | handlers | Restart auditd service"]

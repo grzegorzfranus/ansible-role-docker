@@ -1,0 +1,6 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{{ ansible_managed | comment }}
+[Service]
+# Reset default ExecStart and run dockerd without command-line flags
+ExecStart=
+ExecStart=/usr/bin/dockerd

@@ -1,0 +1,62 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Repository Tasks
+# =============================================================================
+# This file configures official Docker repositories with GPG verification on
+# Debian/Ubuntu and Enterprise Linux platforms.
+#
+# Flow:
+# 1. Setup APT keyring and repository
+# 2. Setup DNF/YUM repository
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Debian/Ubuntu Repository Setup
+# -----------------------------------------------------------------------------
+- name: 📦 Docker | repository | Create apt keyrings directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  when: >
+    ansible_os_family | lower == "debian"
+
+- name: 📦 Docker | repository | Download Docker GPG key (ASCII)
+  become: true
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/{{ 'ubuntu' if ansible_facts.distribution | lower == 'ubuntu' else 'debian' }}/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+  when: >
+    ansible_os_family | lower == "debian"
+
+- name: 📦 Docker | repository | Set up apt repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/{{ 'ubuntu' if ansible_facts.distribution | lower == 'ubuntu' else 'debian' }}
+      {{ docker_apt_codename }} stable
+    state: present
+    filename: docker
+    update_cache: true
+  when: >
+    ansible_os_family | lower == "debian"
+
+# -----------------------------------------------------------------------------
+# 2. Enterprise Linux (Rocky) Repository Setup
+# -----------------------------------------------------------------------------
+- name: 📦 Docker | repository | Configure yum repository
+  become: true
+  ansible.builtin.yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: "{{ docker_yum_baseurl }}"
+    enabled: true
+    gpgcheck: true
+    gpgkey: "{{ docker_yum_gpgkey }}"
+  when: >
+    ansible_os_family | lower == "redhat"

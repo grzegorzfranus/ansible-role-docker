@@ -1,0 +1,3 @@
+---
+# Debian 11 (bullseye)
+docker_apt_codename: "bullseye"

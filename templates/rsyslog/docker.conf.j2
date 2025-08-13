@@ -1,0 +1,15 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+# =============================================================================
+# Docker Rsyslog Configuration
+# =============================================================================
+# Redirect Docker daemon (dockerd) log messages into a dedicated log file using
+# a simple programname filter and stop processing to avoid duplicates.
+# =============================================================================
+
+{% set target_log = (docker_log_directory_path | length > 0)
+  | ternary(docker_log_directory_path ~ '/docker.log', '/var/log/docker.log') %}
+
+if ($programname == 'dockerd') then {
+  {{ target_log }}
+  stop
+}

@@ -1,0 +1,25 @@
+---
+# General variables derived per OS
+
+# Service name is consistent across platforms but exposed for overrides
+docker_service_name: docker
+
+# Map Ansible arch to Debian/Ubuntu repo arch naming
+docker_apt_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+  armv7l: armhf
+  armv6l: armhf
+
+docker_apt_arch: "{{ docker_apt_arch_map.get(ansible_facts.architecture, ansible_facts.architecture) }}"
+
+# APT codename (can be overridden per OS vars)
+docker_apt_codename: "{{ ansible_facts.distribution_release | lower }}"
+
+# YUM/DNF repository settings (can be overridden per OS vars)
+docker_yum_baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
+docker_yum_gpgkey: "https://download.docker.com/linux/centos/gpg"
+
+# Rsyslog configuration (managed via vars as requested)
+docker_rsyslog_conf_name: "99-docker.conf"
+docker_rsyslog_imjournal_filecreatemode: "0644"

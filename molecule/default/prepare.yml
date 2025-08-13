@@ -1,0 +1,28 @@
+# =============================================================================
+# Ansible Role: Docker - Molecule Preparation Playbook
+# =============================================================================
+# Prepare the systemd-enabled container for role execution.
+#
+# Flow:
+# 1. Fix /etc/shadow permissions (workaround for some images)
+# =============================================================================
+
+---
+- name: 🧪 Docker | molecule | Prepare
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: 🧪 Docker | molecule | prepare | Fix /etc/shadow permissions
+      register: etc_shadow
+      ansible.builtin.shell:
+        cmd: |
+          echo ""
+          ls -l /etc/shadow || true
+          chmod 0400 /etc/shadow || true
+          ls -l /etc/shadow || true
+          echo ""
+
+    - name: 🧪 Docker | molecule | prepare | Show shadow permissions
+      ansible.builtin.debug:
+        var: etc_shadow.stdout

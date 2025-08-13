@@ -1,0 +1,150 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Main Tasks
+# =============================================================================
+# Orchestrates role execution in ordered steps.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. load os-specific variables
+# -----------------------------------------------------------------------------
+- name: 📂 Docker | include_vars | Gather OS specific variables
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts['distribution'] | lower }}_{{ ansible_facts['distribution_version'] | lower }}.yml"
+        - "{{ ansible_facts['distribution'] | lower }}_{{ ansible_facts['distribution_major_version'] | lower }}.yml"
+        - "{{ ansible_facts['distribution'] | lower }}.yml"
+        - "{{ ansible_facts['os_family'] | lower }}_{{ ansible_facts['distribution_version'] | lower }}.yml"
+        - "{{ ansible_facts['os_family'] | lower }}_{{ ansible_facts['distribution_major_version'].split('.')[0] }}.yml"
+        - "{{ ansible_facts['os_family'] | lower }}.yml"
+        - "main.yml"
+      paths:
+        - "{{ role_path }}/vars"
+  tags:
+    - always
+    - setup
+    - init
+
+# -----------------------------------------------------------------------------
+# 2. validate variables
+# -----------------------------------------------------------------------------
+- name: 🧪 Docker | assert | Validate role variables and requirements
+  ansible.builtin.import_tasks: assert.yml
+  run_once: true
+  delegate_to: localhost
+  tags:
+    - always
+    - validate
+    - check
+
+# -----------------------------------------------------------------------------
+# 3. prerequisites and warnings
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | prerequisites | Verify prerequisites and warn
+  ansible.builtin.include_tasks: prerequisites.yml
+  when: >
+    docker_role_action in ['all', 'requirements']
+  tags:
+    - setup
+    - requirements
+
+# -----------------------------------------------------------------------------
+# 4. repository configuration
+# -----------------------------------------------------------------------------
+- name: 📦 Docker | repository | Configure official Docker repositories
+  ansible.builtin.include_tasks: repository.yml
+  when: >
+    docker_role_action in ['all', 'install']
+  tags:
+    - setup
+    - install
+
+# -----------------------------------------------------------------------------
+# 5. package installation
+# -----------------------------------------------------------------------------
+- name: 📦 Docker | install | Install Docker packages
+  ansible.builtin.include_tasks: install.yml
+  when: >
+    docker_role_action in ['all', 'install']
+  tags:
+    - setup
+    - install
+
+# -----------------------------------------------------------------------------
+# 6. daemon and systemd drop-ins configuration
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | configure | Configure daemon.json and systemd drop-ins
+  ansible.builtin.include_tasks: configure.yml
+  when: >
+    docker_role_action in ['all', 'configure']
+  tags:
+    - setup
+    - configure
+
+# -----------------------------------------------------------------------------
+# 7. logging to files (optional)
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | logging | Configure rsyslog and logrotate (optional)
+  ansible.builtin.include_tasks: logging.yml
+  when: >
+    docker_role_action in ['all', 'configure', 'logging'] and docker_configure_rsyslog | default(false)
+  tags:
+    - configure
+    - logging
+
+# -----------------------------------------------------------------------------
+# 8. logrotate configuration
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | logrotate | Configure logrotate for Docker
+  ansible.builtin.include_tasks: logrotate.yml
+  when: >
+    docker_role_action in ['all', 'configure', 'logging']
+  tags:
+    - configure
+    - logrotate
+
+# -----------------------------------------------------------------------------
+# 9. service enable/start
+# -----------------------------------------------------------------------------
+- name: 🔄 Docker | service | Enable and start docker service
+  ansible.builtin.include_tasks: service.yml
+  when: >
+    docker_role_action in ['all', 'install', 'configure']
+  tags:
+    - setup
+    - service
+
+# -----------------------------------------------------------------------------
+# 10. prune timer (optional)
+# -----------------------------------------------------------------------------
+- name: 🧹 Docker | prune | Configure prune systemd timer (optional)
+  ansible.builtin.include_tasks: prune.yml
+  when: >
+    docker_role_action in ['all', 'configure', 'prune'] and docker_prune_enabled | default(false)
+  tags:
+    - configure
+    - prune
+
+# -----------------------------------------------------------------------------
+# 11. backup timer (optional)
+# -----------------------------------------------------------------------------
+- name: 💾 Docker | backup | Configure backup systemd timer (optional)
+  ansible.builtin.include_tasks: backup.yml
+  when: >
+    docker_role_action in ['all', 'configure', 'backup'] and docker_backup_enabled | default(false)
+  tags:
+    - configure
+    - backup
+
+# -----------------------------------------------------------------------------
+# 12. audit rule (optional)
+# -----------------------------------------------------------------------------
+- name: 🔒 Docker | audit | Configure audit rule for docker.sock (optional)
+  ansible.builtin.include_tasks: audit.yml
+  when: >
+    docker_role_action in ['all', 'configure'] and docker_audit_socket | default(false)
+  tags:
+    - configure
+    - audit

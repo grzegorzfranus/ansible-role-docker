@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BACKUP_DIR="{{ docker_backup_path }}"
+TS="$(date +%Y%m%d-%H%M%S)"
+DEST_DIR="$BACKUP_DIR/$TS"
+mkdir -p "$DEST_DIR"
+
+# 1. daemon.json
+if [ -f /etc/docker/daemon.json ]; then
+  cp -a /etc/docker/daemon.json "$DEST_DIR/daemon.json"
+fi
+
+# 2. images with digests
+if command -v docker >/dev/null 2>&1; then
+  docker image ls --digests --no-trunc > "$DEST_DIR/images.txt" || true
+  docker ps -a --no-trunc > "$DEST_DIR/containers.txt" || true
+  {% if docker_backup_include_volumes_metadata %}
+  docker volume ls > "$DEST_DIR/volumes.txt" || true
+  for V in $(docker volume ls -q); do
+    docker volume inspect "$V" > "$DEST_DIR/volume_${V}.json" || true
+  done
+  {% endif %}
+fi
+
+# retention
+cd "$BACKUP_DIR"
+ls -1dt */ | tail -n +$(( {{ docker_backup_retention }} + 1 )) | xargs -r rm -rf --

@@ -1,0 +1,45 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Logrotate Tasks
+# =============================================================================
+# This file configures log rotation for Docker log files written by rsyslog so
+# they don't grow indefinitely and are properly archived.
+#
+# Flow:
+# 1. Creates the archive directory if it doesn't exist
+# 2. Deploys a logrotate configuration file with specified options
+#
+# The logrotate configuration is customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Archive Directory Setup
+# -----------------------------------------------------------------------------
+- name: 🗂️ Docker | logrotate | Check if archive log directory exists
+  become: true
+  ansible.builtin.stat:
+    path: "{{ docker_log_directory_path }}"
+  register: _docker_log_directory_stat_
+
+- name: 📂 Docker | logrotate | Create log directory if needed
+  become: true
+  ansible.builtin.file:
+    path: "{{ docker_log_directory_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: >
+    not _docker_log_directory_stat_.stat.exists
+
+# -----------------------------------------------------------------------------
+# 2. Logrotate Configuration
+# -----------------------------------------------------------------------------
+- name: 🧩 Docker | logrotate | Deploy logrotate configuration file
+  become: true
+  ansible.builtin.template:
+    src: "templates/logrotate/docker.j2"
+    dest: "/etc/logrotate.d/docker"
+    owner: root
+    group: root
+    mode: "0644"

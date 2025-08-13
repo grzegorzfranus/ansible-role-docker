@@ -1,0 +1,102 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Configuration Tasks
+# =============================================================================
+# This file configures Docker daemon and systemd drop-ins with secure defaults
+# and optionally creates user-defined Docker networks.
+#
+# Flow:
+# 1. Ensure configuration directories exist
+# 2. Render daemon.json with secure defaults
+# 3. Configure systemd drop-ins for proxy and socket permissions
+# 4. Create user-defined networks (optional)
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Configuration Directories
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | configure | Ensure /etc/docker exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: '0755'
+
+# -----------------------------------------------------------------------------
+# 2. Daemon Configuration
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | configure | Render daemon.json
+  become: true
+  ansible.builtin.template:
+    src: docker/daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - "Docker | handlers | Restart docker service"
+
+# -----------------------------------------------------------------------------
+# 3. Systemd Drop-ins
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | configure | Ensure systemd drop-in dir exists for docker.service
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    mode: '0755'
+
+- name: ⚙️ Docker | configure | Override ExecStart to avoid flag conflicts
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-service-override.conf.j2
+    dest: /etc/systemd/system/docker.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - "Docker | handlers | Systemd daemon-reload"
+    - "Docker | handlers | Restart docker service"
+
+- name: ⚙️ Docker | configure | Configure proxy environment for docker.service (optional)
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-service-proxy.conf.j2
+    dest: /etc/systemd/system/docker.service.d/proxy.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: >
+    docker_http_proxy or docker_https_proxy or docker_no_proxy
+  notify:
+    - "Docker | handlers | Systemd daemon-reload"
+    - "Docker | handlers | Restart docker service"
+
+- name: ⚙️ Docker | configure | Ensure systemd drop-in dir exists for docker.socket
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.socket.d
+    state: directory
+    mode: '0755'
+
+- name: ⚙️ Docker | configure | Enforce docker.sock group/mode via systemd override
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-socket-override.conf.j2
+    dest: /etc/systemd/system/docker.socket.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - "Docker | handlers | Systemd daemon-reload"
+    - "Docker | handlers | Restart docker service"
+
+# -----------------------------------------------------------------------------
+# 4. Networks (Optional)
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | configure | Create user-defined networks (optional)
+  ansible.builtin.include_tasks: network.yml
+  when: >
+    docker_networks | length > 0

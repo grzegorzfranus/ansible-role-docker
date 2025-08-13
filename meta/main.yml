@@ -1,0 +1,43 @@
+---
+galaxy_info:
+  role_name: docker
+  author: Grzegorz Franus
+  namespace: grzegorzfranus
+  description: >
+    Install and configure Docker Engine from official repositories with secure defaults.
+  license: Apache-2.0
+  company: EWARE
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: Debian
+      versions:
+        - "bookworm"
+        - "bullseye"
+      galaxy_tags:
+        - debian
+        - debian12
+        - debian11
+    - name: Ubuntu
+      versions:
+        - "noble"
+        - "jammy"
+      galaxy_tags:
+        - ubuntu
+        - ubuntu24
+        - ubuntu22
+    - name: Rocky
+      versions:
+        - "9.0"
+      galaxy_tags:
+        - rocky
+        - rocky9
+
+  galaxy_tags:
+    - docker
+    - containerd
+    - security
+    - logging
+    - devops
+
+dependencies: []

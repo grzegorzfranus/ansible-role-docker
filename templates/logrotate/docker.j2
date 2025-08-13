@@ -1,0 +1,53 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{{ ansible_managed | comment }}
+
+# =============================================================================
+# Log rotation configuration for Docker daemon logs
+# =============================================================================
+# This template configures rotation of the Docker daemon (dockerd) log file
+# written by rsyslog, preventing unbounded growth and keeping archives tidy.
+#
+# Key behaviors:
+# - Rotation cadence is controlled by 'frequency'
+# - Retention count is controlled by 'rotate'
+# - 'copytruncate' ensures dockerd continues logging without interruption
+# - Optional date extension and archive directory for organized history
+# =============================================================================
+
+{{ docker_log_directory_path }}/docker.log {
+  # Rotation frequency (hourly, daily, weekly, monthly)
+  {{ docker_logrotate_options.frequency }}
+  # Number of rotated files to keep
+  rotate {{ docker_logrotate_options.count }}
+  {% if docker_logrotate_options.missingok | default(true) %}
+  # Don't error if log file is missing
+  missingok
+  {% endif %}
+  {% if docker_logrotate_options.compress | default(true) %}
+  # Compress rotated log files
+  compress
+  {% endif %}
+  {% if docker_logrotate_options.nocreate | default(false) %}
+  # Don't create new log files after rotation
+  nocreate
+  {% endif %}
+  {% if docker_logrotate_options.copytruncate | default(true) %}
+  # Copy and truncate instead of moving log files
+  # This ensures dockerd continues logging without interruption
+  copytruncate
+  {% else %}
+  {% if Docker_logrotate_create.enabled | default(true) %}
+  # Create a fresh log file after rotation when not using copytruncate
+  create {{ Docker_logrotate_create.mode | default('0640') }} {{ Docker_logrotate_create.owner | default('root') }} {{ Docker_logrotate_create.group | default('adm') }}
+  {% endif %}
+  {% endif %}
+  {% if docker_logrotate_options.dateext | default(true) %}
+  # Add date to name of archive log files
+  dateext
+  dateformat .%Y-%m-%d
+  {% endif %}
+  # Archive log directory path
+  olddir {{ docker_logrotate_options.archive_directory_path | default(docker_log_directory_path) }}
+  # Run scripts only once for multiple files
+  sharedscripts
+}

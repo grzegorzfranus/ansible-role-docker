@@ -1,0 +1,59 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Prerequisites Tasks
+# =============================================================================
+# This file prepares the system with required base packages and emits important
+# warnings prior to installation and configuration steps.
+#
+# Flow:
+# 1. Ensure base packages for APT-based systems
+# 2. Ensure base packages for DNF-based systems
+# 3. Detect and warn if /var/lib/docker is not a separate filesystem
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Ensure Base Packages (Debian/Ubuntu)
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | prerequisites | Ensure base packages present (Debian/Ubuntu)
+  become: true
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: true
+  when: >
+    ansible_os_family | lower == "debian"
+
+# -----------------------------------------------------------------------------
+# 2. Ensure Base Packages (EL)
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | prerequisites | Ensure base packages present (EL)
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - ca-certificates
+      - curl
+      - dnf-plugins-core
+    state: present
+  when: >
+    ansible_os_family | lower == "redhat"
+
+# -----------------------------------------------------------------------------
+# 3. Filesystem Check and Warning
+# -----------------------------------------------------------------------------
+- name: ⚙️ Docker | prerequisites | Check if /var/lib/docker is a separate mount
+  ansible.builtin.set_fact:
+    docker_var_lib_is_mount: >-
+      {{ (ansible_facts.mounts | default(ansible_mounts | default([]))) | selectattr('mount', 'equalto', '/var/lib/docker') | list | length > 0 }}
+
+- name: ⚠️ Docker | prerequisites | Warn if /var/lib/docker is not a separate filesystem
+  ansible.builtin.debug:
+    msg: ">> Warning: /var/lib/docker is not a separate filesystem. Consider dedicating a partition if you expect large images/volumes."
+  when: >
+    not docker_var_lib_is_mount | default(false)
+  tags: [warn]

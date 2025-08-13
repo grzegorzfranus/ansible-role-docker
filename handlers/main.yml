@@ -1,0 +1,58 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Handlers
+# =============================================================================
+# This file defines handlers that can be triggered by tasks to perform
+# service management operations. Handlers run only once at the end of plays,
+# even if notified multiple times, following Ansible best practices.
+#
+# Each handler manages specific service operations with enhanced logging
+# and error handling capabilities.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Service Handlers
+# -----------------------------------------------------------------------------
+- name: "🔄 Docker | handlers | Reload systemd daemon"
+  listen: "Docker | handlers | Systemd daemon-reload"
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: "🔄 Docker | handlers | Restart docker service"
+  listen: "Docker | handlers | Restart docker service"
+  become: true
+  ansible.builtin.service:
+    name: "{{ docker_service_name | default('docker') }}"
+    state: restarted
+  register: _docker_service_restart_result
+  failed_when: _docker_service_restart_result.failed
+  when: >
+    not (ansible_virtualization_type is defined and ansible_virtualization_type == 'docker')
+
+- name: "🔄 Docker | handlers | Restart rsyslog service"
+  listen: "Docker | handlers | Restart rsyslog service"
+  become: true
+  ansible.builtin.service:
+    name: rsyslog
+    state: restarted
+  when: >
+    not (ansible_virtualization_type is defined and ansible_virtualization_type == 'docker')
+
+- name: "🔄 Docker | handlers | Restart auditd service"
+  listen: "Docker | handlers | Restart auditd service"
+  become: true
+  ansible.builtin.service:
+    name: auditd
+    state: restarted
+  when: >
+    not (ansible_virtualization_type is defined and ansible_virtualization_type == 'docker')
+
+- name: "📊 Docker | handlers | Report docker service restart status"
+  ansible.builtin.debug:
+    msg:
+      - "🔄 Docker Service Restart Handler Executed:"
+      - "   Service Name: {{ docker_service_name | default('docker') }}"
+      - "   Restart Status: {{ 'Success' if not _docker_service_restart_result.failed else 'Failed' }}"
+      - "   Service State: {{ _docker_service_restart_result.state | default('unknown') }}"
+  when: _docker_service_restart_result is defined

@@ -1,0 +1,44 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Service Tasks
+# =============================================================================
+# This file manages the Docker service state and enforces socket permissions.
+#
+# Flow:
+# 1. Enable and start docker service
+# 2. Enforce /var/run/docker.sock permissions
+# 3. Warn about TCP socket default state
+#
+# These tasks are customizable via role variables.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Service Enable/Start
+# -----------------------------------------------------------------------------
+- name: 🔄 Docker | service | Enable and start docker
+  become: true
+  ansible.builtin.service:
+    name: "{{ docker_service_name | default('docker') }}"
+    enabled: "{{ docker_service_enabled }}"
+    state: started
+
+# -----------------------------------------------------------------------------
+# 2. Socket Permissions
+# -----------------------------------------------------------------------------
+- name: 🔄 Docker | service | Ensure docker socket has correct group/mode
+  become: true
+  ansible.builtin.file:
+    path: /var/run/docker.sock
+    state: file
+    owner: root
+    group: docker
+    mode: '0660'
+  failed_when: false
+
+# -----------------------------------------------------------------------------
+# 3. TCP Socket Warning
+# -----------------------------------------------------------------------------
+- name: 🔄 Docker | service | Ensure TCP socket state (warn only)
+  ansible.builtin.debug:
+    msg: ">> Warning: TCP socket is disabled by default. Set docker_enable_tcp_socket=true to enable (no TLS)."
+  when: not docker_enable_tcp_socket | bool

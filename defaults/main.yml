@@ -1,0 +1,135 @@
+---
+# =============================================================================
+# Ansible Role: Docker - Default Variables
+# =============================================================================
+# This file defines default configuration values for Docker Engine.
+# Values can be overridden in playbooks or inventory.
+#
+# Sections:
+#   1. General Settings
+#   2. Packages and Repository
+#   3. Daemon Configuration
+#   4. Proxy and Registry
+#   5. Logging to Files (rsyslog + logrotate)
+#   6. Prune Timer
+#   7. Backup Timer
+#   8. Rootless Mode
+#   9. Networks
+#   10. Audit
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. General Settings
+# -----------------------------------------------------------------------------
+# Which parts of the role to execute
+# Options: 'all', 'requirements', 'install', 'configure', 'logging', 'prune', 'backup', 'upgrade'
+docker_role_action: "all"
+
+# Manage and enable Docker service
+docker_service_enabled: true
+
+# Package state for Docker packages (present|latest)
+docker_package_state: "present"
+
+# Users to be added to the 'docker' group
+docker_users: []
+
+# -----------------------------------------------------------------------------
+# 2. Packages and Repository
+# -----------------------------------------------------------------------------
+# Install compose and buildx plugins by default
+docker_install_compose_plugin: true
+docker_install_buildx_plugin: true
+
+# Additional packages list (advanced)
+docker_extra_packages: []
+
+# -----------------------------------------------------------------------------
+# 3. Daemon Configuration
+# -----------------------------------------------------------------------------
+# By default bind only to the Unix socket
+docker_enable_tcp_socket: false
+docker_tcp_listen: "0.0.0.0:2375"  # Non-TLS TCP; use with caution
+
+# Default log-driver and options
+docker_log_driver: "json-file"
+docker_log_opts:
+  max-size: "10m"
+  max-file: "3"
+
+# Registry mirrors
+docker_registry_mirrors: []  # e.g. ["https://mirror.gcr.io"]
+
+# Extra daemon.json content merged on top (mapping)
+docker_daemon_extra: {}
+
+# -----------------------------------------------------------------------------
+# 4. Proxy and Registry
+# -----------------------------------------------------------------------------
+docker_http_proxy: ""
+docker_https_proxy: ""
+docker_no_proxy: ""
+
+# -----------------------------------------------------------------------------
+# 5. Logging to Files (rsyslog + logrotate)
+# -----------------------------------------------------------------------------
+# If true, configure rsyslog to write dockerd logs to file and rotate them
+docker_configure_rsyslog: false
+# Default directory for docker logs (used when writing into a subfile). If empty, write directly to /var/log/docker.log
+docker_log_directory_path: "/var/log/docker"
+# Rsyslog file and options
+docker_rsyslog_conf_name: "99-docker.conf"
+docker_rsyslog_imjournal_filecreatemode: "0644"
+# Target log file ownership and permissions (overridden per-OS in vars/)
+docker_rsyslog_log_file_owner: "root"
+docker_rsyslog_log_file_group: "adm"
+docker_rsyslog_log_file_mode: "0640"
+# Logrotate options
+docker_logrotate_options:
+  frequency: "weekly"  # hourly|daily|weekly|monthly
+  count: 12
+  missingok: true
+  compress: true
+  nocreate: false
+  dateext: true
+  archive_directory_path: "{{ docker_log_directory_path }}"
+  copytruncate: true
+
+# When copytruncate is disabled, create a new log file after rotation with these settings
+docker_logrotate_create:
+  enabled: true
+  mode: "0640"
+  owner: "{{ docker_rsyslog_log_file_owner }}"
+  group: "{{ docker_rsyslog_log_file_group }}"
+
+# -----------------------------------------------------------------------------
+# 6. Prune Timer
+# -----------------------------------------------------------------------------
+docker_prune_enabled: false
+docker_prune_frequency: "weekly"  # daily|weekly|monthly
+docker_prune_flags: "--all --volumes --force"
+
+# -----------------------------------------------------------------------------
+# 7. Backup Timer
+# -----------------------------------------------------------------------------
+docker_backup_enabled: false
+docker_backup_path: "/var/backups/docker"
+docker_backup_retention: 7
+docker_backup_include_volumes_metadata: false
+
+# -----------------------------------------------------------------------------
+# 8. Rootless Mode
+# -----------------------------------------------------------------------------
+docker_rootless_enabled: false
+docker_rootless_users: []
+
+# -----------------------------------------------------------------------------
+# 9. Networks
+# -----------------------------------------------------------------------------
+# Example: [{ name: "app-net", driver: "bridge", subnet: "172.30.0.0/16" }]
+docker_networks: []
+
+# -----------------------------------------------------------------------------
+# 10. Audit
+# -----------------------------------------------------------------------------
+docker_audit_socket: false
