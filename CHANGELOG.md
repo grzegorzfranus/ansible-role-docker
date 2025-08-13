@@ -19,5 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional auditd rule for `/var/run/docker.sock`
 - Optional user-defined bridge networks
 
+### Changed 🔄
+- Molecule converge uses Galaxy role name `grzegorzfranus.docker` (was `ansible-role-docker`)
+- README examples updated to use `grzegorzfranus.docker`
+- Rsyslog configuration simplified and made distro-friendly; default log path via `docker_log_directory_path`
+- Assertions expanded to validate logging/logrotate vars and package state
+
+### Fixed 🔧
+- daemon.json generation: removed leading comment and only set `hosts` when `docker_enable_tcp_socket=true`
+- Avoided fd:// vs daemon.json conflict via systemd `ExecStart=` override drop-in for `docker.service`
+- Ensured log directory/file are created with correct owner/group/mode per OS before rsyslog reload
+- Logrotate now supports `copytruncate` or `create` (with mode/owner/group) when not using copytruncate
+- Lint: role is clean under role-local ansible-lint and yamllint configs
+
 ### Removed ❌
 - Oracle Linux 8/9 from supported platforms

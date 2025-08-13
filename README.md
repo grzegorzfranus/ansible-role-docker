@@ -47,7 +47,7 @@ This role requires root access, so either configure it in your inventory files, 
 - hosts: servers
   become: true
   roles:
-    - role: ansible-role-docker
+    - role: grzegorzfranus.docker
 ```
 
 ## Role Variables
@@ -175,7 +175,7 @@ Note: On Ubuntu, the role sets log file owner/group to `syslog:adm`; on RHEL/Roc
   hosts: all
   become: true
   roles:
-    - role: ansible-role-docker
+    - role: grzegorzfranus.docker
       vars:
         docker_users: ["alice", "bob"]
         docker_configure_rsyslog: true
@@ -188,7 +188,7 @@ Note: On Ubuntu, the role sets log file owner/group to `syslog:adm`; on RHEL/Roc
   hosts: docker_hosts
   become: true
   roles:
-    - role: ansible-role-docker
+    - role: grzegorzfranus.docker
       vars:
         docker_users: ["deploy"]
         docker_registry_mirrors:
