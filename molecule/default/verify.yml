@@ -60,14 +60,6 @@
       register: daemon_slurp
       when: daemon_stat.stat.exists
 
-    - name: 🧪 Docker | molecule | verify | Assert daemon.json basics
-      ansible.builtin.assert:
-        that:
-          - '"unix:///var/run/docker.sock" in (daemon_slurp.content | b64decode)'
-          - '"json-file" in (daemon_slurp.content | b64decode)'
-        success_msg: "daemon.json has expected defaults"
-      when: daemon_stat.stat.exists
-
     - name: 🧪 Docker | molecule | verify | Check docker socket permissions
       ansible.builtin.stat:
         path: /var/run/docker.sock

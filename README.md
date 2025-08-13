@@ -1,9 +1,8 @@
----
 # Ansible Role: Docker
 
-|Source|CI|License|
-|------|---|-------|
-|[Source Code](https://github.com/grzegorzfranus/personal/tree/main/ansible/roles/ansible-role-docker)|—|[Apache-2.0](LICENSE)|
+|Source|Version|CI|License|
+|------|-------|-------|-------|
+|[![Source Code](https://img.shields.io/badge/source-github-blue.svg)](https://github.com/grzegorzfranus/ansible-role-docker)|[![Version](https://img.shields.io/github/v/release/grzegorzfranus/ansible-role-docker)](https://github.com/grzegorzfranus/ansible-role-docker/releases)|[![tests](https://github.com/grzegorzfranus/ansible-role-docker/actions/workflows/ci.yml/badge.svg)](https://github.com/grzegorzfranus/ansible-role-docker/actions)|[![Repository License](https://img.shields.io/badge/license-apache2.0-brightgreen.svg)](LICENSE)|
 
 This Ansible role installs and configures Docker Engine from official repositories on Debian/Ubuntu and Enterprise Linux (Rocky). It provides secure defaults, optional logging to files, scheduled pruning and backups, and convenient features like user/group management and user-defined bridge networks.
 
