@@ -37,11 +37,26 @@
   ansible.builtin.dnf:
     name:
       - ca-certificates
-      - curl
       - dnf-plugins-core
     state: present
   when: >
     ansible_os_family | lower == "redhat"
+
+- name: ⚙️ Docker | prerequisites | Gather installed packages (EL)
+  ansible.builtin.package_facts:
+    manager: auto
+  when: >
+    ansible_os_family | lower == "redhat"
+
+- name: ⚙️ Docker | prerequisites | Ensure curl present when neither curl nor curl-minimal installed (EL)
+  become: true
+  ansible.builtin.dnf:
+    name: curl
+    state: present
+  when: >
+    ansible_os_family | lower == "redhat" and
+    (not ('curl' in ansible_facts.packages)) and
+    (not ('curl-minimal' in ansible_facts.packages))
 
 # -----------------------------------------------------------------------------
 # 3. Filesystem Check and Warning
