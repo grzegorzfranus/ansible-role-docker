@@ -1,37 +1,18 @@
 ---
-# =============================================================================
-# Ansible Role: Docker - Assertions Tasks
-# =============================================================================
-# This file validates role variables to ensure correct types and allowed values,
-# preventing runtime errors and keeping tasks idempotent and predictable.
-#
-# Flow:
-# 1. Validate role action selector
-# 2. Validate boolean flags
-# 3. Validate list and mapping variables
-# 4. Validate prune/backup/logrotate settings
-# 5. Validation summary
-#
-# These tasks are customizable via role variables.
-# =============================================================================
+# Docker Assert — Runtime validation of variable values.
+# Basic type/choice validation is handled by meta/argument_specs.yml.
+# This file performs runtime-only checks (regex patterns, content validation, cross-field logic).
 
-# -----------------------------------------------------------------------------
-# 1. Role Action Validation
-# -----------------------------------------------------------------------------
-- name: "🧪 Docker | assert | Validate role action parameter"
+- name: Docker | assert | Validate service state choice
   ansible.builtin.assert:
     that:
-      - docker_role_action is defined
-      - docker_role_action is string
-      - docker_role_action in ['all','requirements','install','configure','logging','prune','backup','upgrade']
-    fail_msg: "❌ Invalid docker_role_action '{{ docker_role_action | default('undefined') }}'. Must be one of: all, requirements, install, configure, logging, prune, backup, upgrade"
-    success_msg: "✅ Role action parameter is valid: {{ docker_role_action }}"
-    quiet: true
+      - docker_state is defined
+      - docker_state is string
+      - docker_state in ['present', 'absent']
+    fail_msg: "Invalid docker_state '{{ docker_state | default('undefined') }}'. Allowed: present, absent"
+    success_msg: "Service state: {{ docker_state }}"
 
-# -----------------------------------------------------------------------------
-# 2. Boolean Flags Validation
-# -----------------------------------------------------------------------------
-- name: "🧪 Docker | assert | Validate boolean flags"
+- name: Docker | assert | Validate boolean flags
   ansible.builtin.assert:
     that:
       - docker_service_enabled is boolean
@@ -43,47 +24,84 @@
       - docker_backup_enabled is boolean
       - docker_rootless_enabled is boolean
       - docker_audit_socket is boolean
-    fail_msg: "❌ One of the boolean flags is invalid (must be true/false)"
-    success_msg: "✅ Boolean flags are valid"
-    quiet: true
+      - docker_backup_include_volumes_metadata is boolean
+    fail_msg: "One of the boolean flags is invalid (must be true/false)"
+    success_msg: "Boolean flags are valid"
 
-# -----------------------------------------------------------------------------
-# 3. Lists and Mappings Validation
-# -----------------------------------------------------------------------------
-- name: "🧪 Docker | assert | Validate lists and mappings"
+- name: Docker | assert | Validate lists and mappings
   ansible.builtin.assert:
     that:
       - docker_users is sequence
+      - docker_extra_packages is sequence
       - docker_registry_mirrors is sequence
       - docker_daemon_extra is mapping
       - docker_networks is sequence
-    fail_msg: "❌ docker_* list/mapping variables have invalid types"
-    success_msg: "✅ docker_* list/mapping variables are valid"
-    quiet: true
+      - docker_rootless_users is sequence
+    fail_msg: "docker_* list/mapping variables have invalid types"
+    success_msg: "docker_* list/mapping variables are valid"
 
-# -----------------------------------------------------------------------------
-# 4. Prune/Backup/Logrotate and Daemon Settings Validation
-# -----------------------------------------------------------------------------
-- name: "🧪 Docker | assert | Validate prune/backup configuration"
-  ansible.builtin.assert:
-    that:
-      - docker_prune_frequency in ['daily','weekly','monthly']
-      - docker_backup_retention is number
-    fail_msg: "❌ Invalid prune/backup settings (check frequency and retention types)"
-    success_msg: "✅ Prune/backup settings are valid"
-    quiet: true
-
-- name: "🧪 Docker | assert | Validate package state"
+- name: Docker | assert | Validate package state
   ansible.builtin.assert:
     that:
       - docker_package_state is defined
       - docker_package_state is string
       - docker_package_state in ['present', 'latest']
-    fail_msg: "❌ Invalid docker_package_state '{{ docker_package_state | default('undefined') }}'. Must be 'present' or 'latest'"
-    success_msg: "✅ Package state is valid: {{ docker_package_state }}"
-    quiet: true
+    fail_msg: "Invalid docker_package_state '{{ docker_package_state | default('undefined') }}'. Must be 'present' or 'latest'"
+    success_msg: "Package state is valid: {{ docker_package_state }}"
 
-- name: "🧪 Docker | assert | Validate logrotate options"
+- name: Docker | assert | Validate daemon configuration
+  ansible.builtin.assert:
+    that:
+      - docker_log_driver is defined
+      - docker_log_driver is string
+      - docker_tcp_listen is defined
+      - docker_tcp_listen is string
+      - docker_log_opts is defined
+      - docker_log_opts is mapping
+      - ('max-size' in docker_log_opts)
+      - ('max-file' in docker_log_opts)
+    fail_msg: "Invalid daemon configuration (driver, tcp listen, or log options missing/invalid)"
+    success_msg: "Daemon configuration is valid"
+
+- name: Docker | assert | Validate proxy variables
+  ansible.builtin.assert:
+    that:
+      - docker_http_proxy is string
+      - docker_https_proxy is string
+      - docker_no_proxy is string
+    fail_msg: "Proxy variables must be strings"
+    success_msg: "Proxy variables are valid"
+
+- name: Docker | assert | Validate prune configuration
+  ansible.builtin.assert:
+    that:
+      - docker_prune_frequency in ['daily', 'weekly', 'monthly']
+      - docker_prune_flags is string
+    fail_msg: "Invalid prune settings (check frequency and flags)"
+    success_msg: "Prune settings are valid"
+
+- name: Docker | assert | Validate backup configuration
+  ansible.builtin.assert:
+    that:
+      - docker_backup_retention is number
+      - docker_backup_path is string
+      - docker_backup_path | length > 0
+    fail_msg: "Invalid backup settings (check retention and path)"
+    success_msg: "Backup settings are valid"
+
+- name: Docker | assert | Validate logging variables
+  ansible.builtin.assert:
+    that:
+      - docker_log_directory_path is string
+      - docker_rsyslog_conf_name is string
+      - docker_rsyslog_imjournal_filecreatemode is string
+      - docker_rsyslog_log_file_owner is string
+      - docker_rsyslog_log_file_group is string
+      - docker_rsyslog_log_file_mode is string
+    fail_msg: "Invalid logging variables (types must be strings)"
+    success_msg: "Logging variables are valid"
+
+- name: Docker | assert | Validate logrotate options
   ansible.builtin.assert:
     that:
       - docker_logrotate_options is defined
@@ -92,7 +110,7 @@
       - docker_logrotate_options.archive_directory_path is string
       - docker_logrotate_options.frequency is defined
       - docker_logrotate_options.frequency is string
-      - docker_logrotate_options.frequency in ['hourly','daily','weekly','monthly']
+      - docker_logrotate_options.frequency in ['hourly', 'daily', 'weekly', 'monthly']
       - docker_logrotate_options.count is defined
       - docker_logrotate_options.count is number
       - docker_logrotate_options.missingok is defined
@@ -105,11 +123,10 @@
       - docker_logrotate_options.copytruncate is boolean
       - docker_logrotate_options.dateext is defined
       - docker_logrotate_options.dateext is boolean
-    fail_msg: "❌ Invalid logrotate configuration options. Ensure all required settings are defined with correct types"
-    success_msg: "✅ Logrotate configuration options are valid"
-    quiet: true
+    fail_msg: "Invalid logrotate configuration options"
+    success_msg: "Logrotate configuration options are valid"
 
-- name: "🧪 Docker | assert | Validate logrotate create options"
+- name: Docker | assert | Validate logrotate create options
   ansible.builtin.assert:
     that:
       - docker_logrotate_create is mapping
@@ -117,48 +134,51 @@
       - docker_logrotate_create.mode is string
       - docker_logrotate_create.owner is string
       - docker_logrotate_create.group is string
-    fail_msg: "❌ Invalid docker_logrotate_create options. Ensure enabled/mode/owner/group are properly set"
-    success_msg: "✅ docker_logrotate_create options are valid"
-    quiet: true
+    fail_msg: "Invalid docker_logrotate_create options"
+    success_msg: "docker_logrotate_create options are valid"
 
-- name: "🧪 Docker | assert | Validate logging variables"
+- name: Docker | assert | Validate system validation flags
   ansible.builtin.assert:
     that:
-      - docker_log_directory_path is string
-      - docker_rsyslog_conf_name is string
-      - docker_rsyslog_imjournal_filecreatemode is string
-      - docker_rsyslog_log_file_owner is string
-      - docker_rsyslog_log_file_group is string
-      - docker_rsyslog_log_file_mode is string
-    fail_msg: "❌ Invalid logging variables (types must be strings)"
-    success_msg: "✅ Logging variables are valid"
-    quiet: true
+      - docker_validate_system is boolean
+      - docker_validate_connectivity is boolean
+      - docker_validate_prerequisites is boolean
+      - docker_collect_system_info is boolean
+    fail_msg: "Validation flags must be boolean"
+    success_msg: "Validation flags are valid"
 
-- name: "🧪 Docker | assert | Validate daemon configuration"
+- name: Docker | assert | Validate error reporting flags
   ansible.builtin.assert:
     that:
-      - docker_log_driver is defined
-      - docker_log_driver is string
-      - docker_tcp_listen is defined
-      - docker_tcp_listen is string
-      - docker_log_opts is defined
-      - docker_log_opts is mapping
-      - ('max-size' in docker_log_opts)
-      - ('max-file' in docker_log_opts)
-    fail_msg: "❌ Invalid daemon configuration (driver, tcp listen, or log options missing/invalid)"
-    success_msg: "✅ Daemon configuration is valid"
-    quiet: true
+      - docker_enhanced_error_reporting is boolean
+      - docker_include_hardware_info is boolean
+      - docker_include_network_info is boolean
+      - docker_include_package_info is boolean
+    fail_msg: "Error reporting flags must be boolean"
+    success_msg: "Error reporting flags are valid"
 
-# -----------------------------------------------------------------------------
-# 5. Validation Summary
-# -----------------------------------------------------------------------------
-- name: "📊 Docker | assert | Report validation results"
+- name: Docker | assert | Validate connectivity timeout
+  ansible.builtin.assert:
+    that:
+      - (docker_connectivity_timeout | int) > 0
+    fail_msg: "docker_connectivity_timeout must be > 0"
+    success_msg: "Connectivity timeout: {{ docker_connectivity_timeout }}s"
+
+- name: Docker | assert | Validate error log lines
+  ansible.builtin.assert:
+    that:
+      - (docker_error_log_lines | int) >= 0
+    fail_msg: "docker_error_log_lines must be >= 0"
+    success_msg: "Error log lines: {{ docker_error_log_lines }}"
+
+- name: Docker | assert | Report validation results
   ansible.builtin.debug:
     msg:
-      - "✅ Docker Variable Validation Completed Successfully:"
-      - "   Role Action: {{ docker_role_action }}"
+      - "Docker Variable Validation Completed Successfully:"
+      - "   State: {{ docker_state }}"
       - "   Service Enabled: {{ docker_service_enabled }}"
       - "   Prune Enabled: {{ docker_prune_enabled }} ({{ docker_prune_frequency }})"
       - "   Backup Enabled: {{ docker_backup_enabled }} (retention: {{ docker_backup_retention }})"
       - "   Rsyslog Enabled: {{ docker_configure_rsyslog }}"
       - "   Users in docker group: {{ docker_users | length }}"
+    verbosity: 1

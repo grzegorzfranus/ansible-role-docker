@@ -1,0 +1,7 @@
+---
+# EL9: Rocky Linux 9, RHEL 9, AlmaLinux 9, CentOS Stream 9
+__docker_os_log_user: "root"
+__docker_os_log_group: "root"
+__docker_os_syslog_path: "/var/log/messages"
+__docker_yum_baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
+__docker_yum_gpgkey: "https://download.docker.com/linux/centos/gpg"

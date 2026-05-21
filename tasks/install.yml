@@ -1,22 +1,19 @@
 ---
-# =============================================================================
-# Ansible Role: Docker - Installation Tasks
-# =============================================================================
-# This file installs Docker Engine packages from official repositories,
-# including optional Buildx and Compose plugins.
-#
-# Flow:
-# 1. Install packages on Debian/Ubuntu
-# 2. Install packages on EL (Rocky)
-# 3. Ensure docker group exists and add users
-#
-# These tasks are customizable via role variables.
-# =============================================================================
+# Docker Install — Install Docker packages and verify binaries.
 
-# -----------------------------------------------------------------------------
-# 1. Install Packages on Debian/Ubuntu
-# -----------------------------------------------------------------------------
-- name: 📦 Docker | install | Install Docker packages (Debian/Ubuntu)
+- name: Docker | install | Check if Docker is already installed
+  ansible.builtin.command: "docker version --format '{{ '{{' }}.Server.Version{{ '}}' }}'"
+  register: __docker_existing_version
+  failed_when: false
+  changed_when: false
+
+- name: Docker | install | Display pre-installation status
+  ansible.builtin.debug:
+    msg:
+      - "Currently Installed: {{ 'Yes - ' + __docker_existing_version.stdout if __docker_existing_version.rc == 0 else 'No' }}"
+    verbosity: 1
+
+- name: Docker | install | Install Docker packages (Debian/Ubuntu)
   become: true
   ansible.builtin.apt:
     name: >-
@@ -29,13 +26,14 @@
       }}
     state: "{{ docker_package_state }}"
     update_cache: true
-  when: >
-    ansible_os_family | lower == "debian"
+  register: __docker_installation_result
+  until: __docker_installation_result is succeeded
+  retries: 3
+  delay: 10
+  when:
+    - ansible_facts['os_family'] == 'Debian'
 
-# -----------------------------------------------------------------------------
-# 2. Install Packages on Enterprise Linux (Rocky)
-# -----------------------------------------------------------------------------
-- name: 📦 Docker | install | Install Docker packages (EL)
+- name: Docker | install | Install Docker packages (EL)
   become: true
   ansible.builtin.dnf:
     name: >-
@@ -47,24 +45,73 @@
         + docker_extra_packages
       }}
     state: "{{ docker_package_state }}"
-  when: >
-    ansible_os_family | lower == "redhat"
+  register: __docker_installation_result
+  until: __docker_installation_result is succeeded
+  retries: 3
+  delay: 10
+  when:
+    - ansible_facts['os_family'] == 'RedHat'
 
-# -----------------------------------------------------------------------------
-# 3. Group Management
-# -----------------------------------------------------------------------------
-- name: 📦 Docker | install | Ensure docker group exists
+- name: Docker | install | Verify Docker installation
+  ansible.builtin.command: "docker version --format '{{ '{{' }}.Server.Version{{ '}}' }}'"
+  register: __docker_installed_version
+  changed_when: false
+  failed_when: __docker_installed_version.rc != 0
+
+- name: Docker | install | Check Docker daemon binary
+  ansible.builtin.stat:
+    path: "/usr/bin/dockerd"
+  register: __docker_daemon_binary
+
+- name: Docker | install | Verify Docker client binary
+  ansible.builtin.stat:
+    path: "/usr/bin/docker"
+  register: __docker_client_binary
+
+- name: Docker | install | Ensure docker group exists
   become: true
   ansible.builtin.group:
     name: docker
     state: present
 
-- name: 📦 Docker | install | Add users to docker group
+- name: Docker | install | Add users to docker group
   become: true
   ansible.builtin.user:
     name: "{{ item }}"
     groups: docker
     append: true
   loop: "{{ docker_users }}"
-  when: >
-    docker_users | length > 0
+  when:
+    - docker_users | length > 0
+
+- name: Docker | install | Report installation results
+  ansible.builtin.debug:
+    msg:
+      - "Docker {{ __docker_installed_version.stdout }} installed"
+      - "   Changed: {{ 'Yes' if __docker_installation_result.changed else 'No (already installed)' }}"
+    verbosity: 1
+  when:
+    - docker_collect_system_info | bool
+
+- name: Docker | install | Store installation information
+  ansible.builtin.set_fact:
+    __docker_installation_info:
+      version: "{{ __docker_installed_version.stdout }}"
+      installation_changed: "{{ __docker_installation_result.changed }}"
+      client_binary_path: "/usr/bin/docker"
+      daemon_binary_path: "/usr/bin/dockerd"
+      client_binary_exists: "{{ __docker_client_binary.stat.exists }}"
+      daemon_binary_exists: "{{ __docker_daemon_binary.stat.exists }}"
+      timestamp: "{{ ansible_facts['date_time'].iso8601 }}"
+  when:
+    - docker_collect_system_info | bool
+
+- name: Docker | install | Handle installation errors
+  ansible.builtin.include_tasks: error_reporting.yml
+  when:
+    - docker_enhanced_error_reporting | bool
+    - >-
+      (__docker_installation_result is defined and __docker_installation_result.failed | default(false)) or
+      (__docker_installed_version is defined and __docker_installed_version.failed | default(false)) or
+      (not __docker_client_binary.stat.exists) or
+      (not __docker_daemon_binary.stat.exists)

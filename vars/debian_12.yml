@@ -1,3 +1,5 @@
 ---
 # Debian 12 (bookworm)
-docker_apt_codename: "bookworm"
+__docker_apt_codename: "bookworm"
+__docker_os_log_user: "root"
+__docker_os_log_group: "adm"

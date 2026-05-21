@@ -1,0 +1,324 @@
+---
+argument_specs:
+  main:
+    short_description: "Install and configure Docker Engine on Debian-based and EL9 systems"
+    description:
+      - "Installs Docker Engine, configures the daemon, and manages optional features like logging, pruning, and backups."
+      - "Supports Ubuntu 22.04/24.04, Debian 11/12, and EL9 (Rocky Linux 9, RHEL 9, AlmaLinux 9)."
+    author: "Grzegorz Franus"
+
+    options:
+      # Lifecycle
+      docker_state:
+        description: "Control overall role behavior: install or uninstall"
+        type: str
+        default: "present"
+        choices:
+          - present
+          - absent
+
+      # General
+      docker_service_enabled:
+        description: "Whether the Docker service starts automatically on boot"
+        type: bool
+        default: true
+
+      docker_package_state:
+        description: "Package state for Docker packages"
+        type: str
+        default: "present"
+        choices:
+          - present
+          - latest
+
+      docker_users:
+        description: "List of users to add to the docker group"
+        type: list
+        elements: str
+        default: []
+
+      # Packages
+      docker_install_compose_plugin:
+        description: "Install docker-compose-plugin"
+        type: bool
+        default: true
+
+      docker_install_buildx_plugin:
+        description: "Install docker-buildx-plugin"
+        type: bool
+        default: true
+
+      docker_extra_packages:
+        description: "Additional packages to install alongside Docker"
+        type: list
+        elements: str
+        default: []
+
+      # Daemon
+      docker_enable_tcp_socket:
+        description: "Enable dockerd TCP socket in addition to unix socket (no TLS)"
+        type: bool
+        default: false
+
+      docker_tcp_listen:
+        description: "TCP listen address when TCP socket is enabled"
+        type: str
+        default: "0.0.0.0:2375"
+
+      docker_log_driver:
+        description: "Default Docker log driver"
+        type: str
+        default: "json-file"
+
+      docker_log_opts:
+        description: "Docker log driver options"
+        type: dict
+        default:
+          max-size: "10m"
+          max-file: "3"
+
+      docker_registry_mirrors:
+        description: "List of Docker registry mirrors"
+        type: list
+        elements: str
+        default: []
+
+      docker_daemon_extra:
+        description: "Extra key/values merged into daemon.json"
+        type: dict
+        default: {}
+
+      # Proxy
+      docker_http_proxy:
+        description: "HTTP proxy for Docker service"
+        type: str
+        default: ""
+
+      docker_https_proxy:
+        description: "HTTPS proxy for Docker service"
+        type: str
+        default: ""
+
+      docker_no_proxy:
+        description: "NO_PROXY for Docker service"
+        type: str
+        default: ""
+
+      # Logging
+      docker_configure_rsyslog:
+        description: "Configure rsyslog to write dockerd logs to a dedicated file"
+        type: bool
+        default: false
+
+      docker_log_directory_path:
+        description: "Log directory path for Docker logs"
+        type: str
+        default: "/var/log/docker"
+
+      docker_rsyslog_conf_name:
+        description: "Name of rsyslog config file in /etc/rsyslog.d/"
+        type: str
+        default: "99-docker.conf"
+
+      docker_rsyslog_imjournal_filecreatemode:
+        description: "imjournal file creation mode"
+        type: str
+        default: "0644"
+
+      docker_rsyslog_log_file_owner:
+        description: "Owner of the Docker log file"
+        type: str
+        default: "root"
+
+      docker_rsyslog_log_file_group:
+        description: "Group of the Docker log file"
+        type: str
+        default: "adm"
+
+      docker_rsyslog_log_file_mode:
+        description: "Mode of the Docker log file"
+        type: str
+        default: "0640"
+
+      docker_logrotate_options:
+        description: "Logrotate configuration options"
+        type: dict
+        default:
+          frequency: "weekly"
+          count: 12
+          missingok: true
+          compress: true
+          nocreate: false
+          dateext: true
+          archive_directory_path: "/var/log/docker"
+          copytruncate: true
+        options:
+          frequency:
+            description: "Log rotation frequency"
+            type: str
+            choices:
+              - hourly
+              - daily
+              - weekly
+              - monthly
+          count:
+            description: "Number of rotated log files to keep"
+            type: int
+          missingok:
+            description: "Don't error if log file is missing"
+            type: bool
+          compress:
+            description: "Compress rotated log files"
+            type: bool
+          nocreate:
+            description: "Don't create new log files after rotation"
+            type: bool
+          dateext:
+            description: "Use date extension for rotated files"
+            type: bool
+          archive_directory_path:
+            description: "Archive directory for rotated logs"
+            type: str
+          copytruncate:
+            description: "Use copytruncate instead of moving files"
+            type: bool
+
+      docker_logrotate_create:
+        description: "Logrotate create options when copytruncate is disabled"
+        type: dict
+        default:
+          enabled: true
+          mode: "0640"
+          owner: "root"
+          group: "adm"
+        options:
+          enabled:
+            description: "Create a fresh log file after rotation"
+            type: bool
+          mode:
+            description: "New file mode"
+            type: str
+          owner:
+            description: "New file owner"
+            type: str
+          group:
+            description: "New file group"
+            type: str
+
+      # Prune
+      docker_prune_enabled:
+        description: "Enable systemd prune timer"
+        type: bool
+        default: false
+
+      docker_prune_frequency:
+        description: "Prune cadence"
+        type: str
+        default: "weekly"
+        choices:
+          - daily
+          - weekly
+          - monthly
+
+      docker_prune_flags:
+        description: "Flags passed to docker system prune"
+        type: str
+        default: "--all --volumes --force"
+
+      # Backup
+      docker_backup_enabled:
+        description: "Enable systemd backup timer"
+        type: bool
+        default: false
+
+      docker_backup_path:
+        description: "Backup destination directory"
+        type: str
+        default: "/var/backups/docker"
+
+      docker_backup_retention:
+        description: "Number of retained backups"
+        type: int
+        default: 7
+
+      docker_backup_include_volumes_metadata:
+        description: "Include volumes list and metadata in backups"
+        type: bool
+        default: false
+
+      # Rootless
+      docker_rootless_enabled:
+        description: "Enable rootless Docker (opt-in, future)"
+        type: bool
+        default: false
+
+      docker_rootless_users:
+        description: "Users to configure for rootless Docker"
+        type: list
+        elements: str
+        default: []
+
+      # Networks
+      docker_networks:
+        description: "List of user-defined networks to create"
+        type: list
+        elements: dict
+        default: []
+
+      # Audit
+      docker_audit_socket:
+        description: "Add auditd rule for /var/run/docker.sock"
+        type: bool
+        default: false
+
+      # Validation
+      docker_validate_system:
+        description: "Enable comprehensive system validation checks"
+        type: bool
+        default: true
+
+      docker_validate_connectivity:
+        description: "Enable network connectivity verification to Docker repositories"
+        type: bool
+        default: true
+
+      docker_validate_prerequisites:
+        description: "Enable architecture and package manager validation"
+        type: bool
+        default: true
+
+      docker_collect_system_info:
+        description: "Collect detailed system information for diagnostics"
+        type: bool
+        default: true
+
+      docker_connectivity_timeout:
+        description: "Timeout for network connectivity checks (seconds)"
+        type: int
+        default: 10
+
+      # Error Reporting
+      docker_enhanced_error_reporting:
+        description: "Enable enhanced error reporting with system diagnostics"
+        type: bool
+        default: true
+
+      docker_include_hardware_info:
+        description: "Include system hardware information in error reports"
+        type: bool
+        default: true
+
+      docker_include_network_info:
+        description: "Include network configuration in error reports"
+        type: bool
+        default: true
+
+      docker_include_package_info:
+        description: "Include package manager state in error reports"
+        type: bool
+        default: true
+
+      docker_error_log_lines:
+        description: "Maximum lines of log output to include in error reports"
+        type: int
+        default: 50

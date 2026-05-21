@@ -3,28 +3,40 @@
 # Ansible Role: Docker - Default Variables
 # =============================================================================
 # This file defines default configuration values for Docker Engine.
-# Values can be overridden in playbooks or inventory.
+# These values can be overridden by setting them in your playbook or inventory.
+#
+# Supported OS distributions:
+# - Ubuntu 24.04 (Noble) and variants
+# - Ubuntu 22.04 (Jammy) and variants
+# - Debian 12 (Bookworm) and variants
+# - Debian 11 (Bullseye) and variants
+# - EL9: Rocky Linux 9, RHEL 9, AlmaLinux 9
 #
 # Sections:
-#   1. General Settings
-#   2. Packages and Repository
-#   3. Daemon Configuration
-#   4. Proxy and Registry
-#   5. Logging to Files (rsyslog + logrotate)
-#   6. Prune Timer
-#   7. Backup Timer
-#   8. Rootless Mode
-#   9. Networks
-#   10. Audit
+#   1. Service State (Lifecycle)
+#   2. General Settings
+#   3. Packages and Repository
+#   4. Daemon Configuration
+#   5. Proxy and Registry
+#   6. Logging to Files (rsyslog + logrotate)
+#   7. Prune Timer
+#   8. Backup Timer
+#   9. Rootless Mode
+#   10. Networks
+#   11. Audit
+#   12. System Validation Settings
+#   13. Error Reporting Configuration
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# 1. General Settings
+# 1. Service State (Lifecycle)
 # -----------------------------------------------------------------------------
-# Which parts of the role to execute
-# Options: 'all', 'requirements', 'install', 'configure', 'logging', 'prune', 'backup', 'upgrade'
-docker_role_action: "all"
+# Control overall role behavior: install or uninstall
+docker_state: "present"
 
+# -----------------------------------------------------------------------------
+# 2. General Settings
+# -----------------------------------------------------------------------------
 # Manage and enable Docker service
 docker_service_enabled: true
 
@@ -35,7 +47,7 @@ docker_package_state: "present"
 docker_users: []
 
 # -----------------------------------------------------------------------------
-# 2. Packages and Repository
+# 3. Packages and Repository
 # -----------------------------------------------------------------------------
 # Install compose and buildx plugins by default
 docker_install_compose_plugin: true
@@ -45,7 +57,7 @@ docker_install_buildx_plugin: true
 docker_extra_packages: []
 
 # -----------------------------------------------------------------------------
-# 3. Daemon Configuration
+# 4. Daemon Configuration
 # -----------------------------------------------------------------------------
 # By default bind only to the Unix socket
 docker_enable_tcp_socket: false
@@ -64,18 +76,18 @@ docker_registry_mirrors: []  # e.g. ["https://mirror.gcr.io"]
 docker_daemon_extra: {}
 
 # -----------------------------------------------------------------------------
-# 4. Proxy and Registry
+# 5. Proxy and Registry
 # -----------------------------------------------------------------------------
 docker_http_proxy: ""
 docker_https_proxy: ""
 docker_no_proxy: ""
 
 # -----------------------------------------------------------------------------
-# 5. Logging to Files (rsyslog + logrotate)
+# 6. Logging to Files (rsyslog + logrotate)
 # -----------------------------------------------------------------------------
 # If true, configure rsyslog to write dockerd logs to file and rotate them
 docker_configure_rsyslog: false
-# Default directory for docker logs (used when writing into a subfile). If empty, write directly to /var/log/docker.log
+# Default directory for docker logs
 docker_log_directory_path: "/var/log/docker"
 # Rsyslog file and options
 docker_rsyslog_conf_name: "99-docker.conf"
@@ -103,14 +115,14 @@ docker_logrotate_create:
   group: "{{ docker_rsyslog_log_file_group }}"
 
 # -----------------------------------------------------------------------------
-# 6. Prune Timer
+# 7. Prune Timer
 # -----------------------------------------------------------------------------
 docker_prune_enabled: false
 docker_prune_frequency: "weekly"  # daily|weekly|monthly
 docker_prune_flags: "--all --volumes --force"
 
 # -----------------------------------------------------------------------------
-# 7. Backup Timer
+# 8. Backup Timer
 # -----------------------------------------------------------------------------
 docker_backup_enabled: false
 docker_backup_path: "/var/backups/docker"
@@ -118,18 +130,54 @@ docker_backup_retention: 7
 docker_backup_include_volumes_metadata: false
 
 # -----------------------------------------------------------------------------
-# 8. Rootless Mode
+# 9. Rootless Mode
 # -----------------------------------------------------------------------------
 docker_rootless_enabled: false
 docker_rootless_users: []
 
 # -----------------------------------------------------------------------------
-# 9. Networks
+# 10. Networks
 # -----------------------------------------------------------------------------
 # Example: [{ name: "app-net", driver: "bridge", subnet: "172.30.0.0/16" }]
 docker_networks: []
 
 # -----------------------------------------------------------------------------
-# 10. Audit
+# 11. Audit
 # -----------------------------------------------------------------------------
 docker_audit_socket: false
+
+# -----------------------------------------------------------------------------
+# 12. System Validation Settings
+# -----------------------------------------------------------------------------
+# Enable comprehensive system validation checks
+docker_validate_system: true
+
+# Enable network connectivity verification to Docker repositories
+docker_validate_connectivity: true
+
+# Enable architecture and package manager validation
+docker_validate_prerequisites: true
+
+# Collect detailed system information for error reporting
+docker_collect_system_info: true
+
+# Timeout for network connectivity checks (seconds)
+docker_connectivity_timeout: 10
+
+# -----------------------------------------------------------------------------
+# 13. Error Reporting Configuration
+# -----------------------------------------------------------------------------
+# Enable enhanced error reporting with system diagnostics
+docker_enhanced_error_reporting: true
+
+# Include system hardware information in error reports
+docker_include_hardware_info: true
+
+# Include network configuration in error reports
+docker_include_network_info: true
+
+# Include package manager state in error reports
+docker_include_package_info: true
+
+# Maximum lines of log output to include in error reports
+docker_error_log_lines: 50

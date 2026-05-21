@@ -1,3 +1,5 @@
 ---
 # Debian 11 (bullseye)
-docker_apt_codename: "bullseye"
+__docker_apt_codename: "bullseye"
+__docker_os_log_user: "root"
+__docker_os_log_group: "adm"

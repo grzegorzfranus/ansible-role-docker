@@ -1,22 +1,7 @@
 ---
-# =============================================================================
-# Ansible Role: Docker - Prune Timer Tasks (Optional)
-# =============================================================================
-# This file configures a systemd timer and service to run `docker system prune`
-# periodically.
-#
-# Flow:
-# 1. Deploy systemd service unit
-# 2. Deploy systemd timer unit
-# 3. Enable and start timer
-#
-# These tasks are customizable via role variables.
-# =============================================================================
+# Docker Prune — Configure systemd timer for docker system prune.
 
-# -----------------------------------------------------------------------------
-# 1. Systemd Service Unit
-# -----------------------------------------------------------------------------
-- name: 🧹 Docker | prune | Deploy systemd service
+- name: Docker | prune | Deploy systemd service
   become: true
   ansible.builtin.template:
     src: systemd/docker-prune.service.j2
@@ -24,12 +9,9 @@
     owner: root
     group: root
     mode: '0644'
-  notify: ["Docker | handlers | Systemd daemon-reload"]
+  notify: Docker | handlers | Reload systemd
 
-# -----------------------------------------------------------------------------
-# 2. Systemd Timer Unit
-# -----------------------------------------------------------------------------
-- name: 🧹 Docker | prune | Deploy systemd timer
+- name: Docker | prune | Deploy systemd timer
   become: true
   ansible.builtin.template:
     src: systemd/docker-prune.timer.j2
@@ -37,12 +19,9 @@
     owner: root
     group: root
     mode: '0644'
-  notify: ["Docker | handlers | Systemd daemon-reload"]
+  notify: Docker | handlers | Reload systemd
 
-# -----------------------------------------------------------------------------
-# 3. Timer Enable/Start
-# -----------------------------------------------------------------------------
-- name: 🧹 Docker | prune | Enable and start timer
+- name: Docker | prune | Enable and start timer
   become: true
   ansible.builtin.systemd:
     name: docker-prune.timer

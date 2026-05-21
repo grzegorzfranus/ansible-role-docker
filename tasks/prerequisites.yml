@@ -1,22 +1,7 @@
 ---
-# =============================================================================
-# Ansible Role: Docker - Prerequisites Tasks
-# =============================================================================
-# This file prepares the system with required base packages and emits important
-# warnings prior to installation and configuration steps.
-#
-# Flow:
-# 1. Ensure base packages for APT-based systems
-# 2. Ensure base packages for DNF-based systems
-# 3. Detect and warn if /var/lib/docker is not a separate filesystem
-#
-# These tasks are customizable via role variables.
-# =============================================================================
+# Docker Prerequisites — Install required packages before Docker setup.
 
-# -----------------------------------------------------------------------------
-# 1. Ensure Base Packages (Debian/Ubuntu)
-# -----------------------------------------------------------------------------
-- name: ⚙️ Docker | prerequisites | Ensure base packages present (Debian/Ubuntu)
+- name: Docker | prerequisites | Ensure base packages present (Debian/Ubuntu)
   become: true
   ansible.builtin.apt:
     name:
@@ -26,49 +11,66 @@
       - lsb-release
     state: present
     update_cache: true
-  when: >
-    ansible_os_family | lower == "debian"
+  register: __docker_debian_prereqs_result
+  until: __docker_debian_prereqs_result is succeeded
+  retries: 3
+  delay: 5
+  when:
+    - ansible_facts['os_family'] == 'Debian'
 
-# -----------------------------------------------------------------------------
-# 2. Ensure Base Packages (EL)
-# -----------------------------------------------------------------------------
-- name: ⚙️ Docker | prerequisites | Ensure base packages present (EL)
+- name: Docker | prerequisites | Ensure base packages present (EL)
   become: true
   ansible.builtin.dnf:
     name:
       - ca-certificates
       - dnf-plugins-core
     state: present
-  when: >
-    ansible_os_family | lower == "redhat"
+  register: __docker_el_prereqs_result
+  until: __docker_el_prereqs_result is succeeded
+  retries: 3
+  delay: 5
+  when:
+    - ansible_facts['os_family'] == 'RedHat'
 
-- name: ⚙️ Docker | prerequisites | Gather installed packages (EL)
+- name: Docker | prerequisites | Gather installed packages (EL)
   ansible.builtin.package_facts:
     manager: auto
-  when: >
-    ansible_os_family | lower == "redhat"
+  when:
+    - ansible_facts['os_family'] == 'RedHat'
 
-- name: ⚙️ Docker | prerequisites | Ensure curl present when neither curl nor curl-minimal installed (EL)
+- name: Docker | prerequisites | Ensure curl present when neither curl nor curl-minimal installed (EL)
   become: true
   ansible.builtin.dnf:
     name: curl
     state: present
-  when: >
-    ansible_os_family | lower == "redhat" and
-    (not ('curl' in ansible_facts.packages)) and
-    (not ('curl-minimal' in ansible_facts.packages))
+  when:
+    - ansible_facts['os_family'] == 'RedHat'
+    - not ('curl' in ansible_facts.packages)
+    - not ('curl-minimal' in ansible_facts.packages)
 
-# -----------------------------------------------------------------------------
-# 3. Filesystem Check and Warning
-# -----------------------------------------------------------------------------
-- name: ⚙️ Docker | prerequisites | Check if /var/lib/docker is a separate mount
+- name: Docker | prerequisites | Check if /var/lib/docker is a separate mount
   ansible.builtin.set_fact:
-    docker_var_lib_is_mount: >-
+    __docker_var_lib_is_mount: >-
       {{ (ansible_facts.mounts | default(ansible_mounts | default([]))) | selectattr('mount', 'equalto', '/var/lib/docker') | list | length > 0 }}
 
-- name: ⚠️ Docker | prerequisites | Warn if /var/lib/docker is not a separate filesystem
+- name: Docker | prerequisites | Warn if /var/lib/docker is not a separate filesystem
   ansible.builtin.debug:
-    msg: ">> Warning: /var/lib/docker is not a separate filesystem. Consider dedicating a partition if you expect large images/volumes."
-  when: >
-    not docker_var_lib_is_mount | default(false)
-  tags: [warn]
+    msg: "Warning: /var/lib/docker is not a separate filesystem. Consider dedicating a partition if you expect large images/volumes."
+  when:
+    - not __docker_var_lib_is_mount | default(false)
+
+- name: Docker | prerequisites | Report installation status
+  ansible.builtin.debug:
+    msg:
+      - "Prerequisites installed successfully"
+    verbosity: 1
+  when:
+    - docker_collect_system_info | bool
+
+- name: Docker | prerequisites | Handle installation errors
+  ansible.builtin.include_tasks: error_reporting.yml
+  when:
+    - docker_enhanced_error_reporting | bool
+    - >-
+      (__docker_debian_prereqs_result is defined and __docker_debian_prereqs_result.failed | default(false)) or
+      (__docker_el_prereqs_result is defined and __docker_el_prereqs_result.failed | default(false))
