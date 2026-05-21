@@ -69,7 +69,9 @@
     group: root
     mode: '0644'
   when: >
-    docker_http_proxy or docker_https_proxy or docker_no_proxy
+    (docker_http_proxy | length > 0) or
+    (docker_https_proxy | length > 0) or
+    (docker_no_proxy | length > 0)
   notify:
     - "Docker | handlers | Systemd daemon-reload"
     - "Docker | handlers | Restart docker service"

@@ -150,7 +150,55 @@ Note: On Ubuntu, the role sets log file owner/group to `syslog:adm`; on RHEL/Roc
 |----------|-------------|---------|
 | `docker_audit_socket` | Add auditd rule for `/var/run/docker.sock` if auditd present | `false` |
 
-## Tags
+## 📁 Project Directory Structure
+
+```
+ansible-role-docker/
+├── .github/                  # GitHub Actions workflows
+│   └── workflows/           # CI/CD automation
+│       ├── ci.yml           # CI pipeline (reusable ansible-ci.yml)
+│       └── release.yml      # Release Please + Galaxy publish
+├── .release-please-manifest.json # Release Please version manifest
+├── release-please-config.json # Release Please configuration
+├── defaults/
+│   └── main.yml              # Default variables
+├── handlers/
+│   └── main.yml              # Service handlers
+├── meta/
+│   └── main.yml              # Role metadata
+├── molecule/
+│   └── default/
+│       ├── molecule.yml      # Test configuration
+│       ├── converge.yml      # Role execution playbook
+│       ├── prepare.yml       # Test preparation tasks
+│       └── verify.yml        # Verification tests
+├── tasks/
+│   ├── main.yml              # Main orchestration and flow control
+│   ├── assert.yml            # Variable validation
+│   ├── audit.yml             # Audit configuration
+│   ├── backup.yml            # Backup configuration
+│   ├── configure.yml         # Main configuration management
+│   ├── install.yml           # Package installation
+│   ├── logging.yml           # Logging configuration
+│   ├── logrotate.yml         # Logrotate configuration
+│   ├── network.yml           # Network configuration
+│   ├── prerequisites.yml     # Prerequisites check
+│   ├── prune.yml             # Prune configuration
+│   ├── repository.yml        # Repository setup
+│   └── service.yml           # Service control
+├── templates/
+│   ├── docker/               # Docker templates
+│   ├── logrotate/            # Logrotate templates
+│   ├── rsyslog/              # Rsyslog templates
+│   ├── scripts/              # Helper scripts templates
+│   └── systemd/              # Systemd service/timer templates
+└── vars/
+    ├── main.yml              # Common variables/constants
+    ├── debian.yml            # Debian-specific variables
+    └── redhat.yml            # RedHat-specific variables
+```
+
+## 🏷️ Tags
 
 - `always` - Tasks that always run (variable loading and validation)
 - `setup` - Setup tasks including OS-specific variables, requirements, and installation
@@ -201,20 +249,48 @@ Note: On Ubuntu, the role sets log file owner/group to `syslog:adm`; on RHEL/Roc
         docker_backup_retention: 14
 ```
 
-## License
+## CI/CD Pipeline
 
-Apache-2.0
+### CI Pipeline
 
-## Author Information
+Runs on every Pull Request via centralized reusable workflow:
 
-This role was created by [Grzegorz Franus](https://github.com/grzegorzfranus).
+1. **Branch Name Lint** — enforces naming conventions (`feature/`, `bugfix/`, etc.)
+2. **YAML Lint** — validates all YAML files
+3. **Ansible Lint** — enforces best practices and guidelines compliance
+4. **Security Scan** — TruffleHog secret detection
+5. **Molecule Tests** — matrix across Debian 11/12, Ubuntu 22.04/24.04, and Rocky Linux 9
+6. **Merge Check** — aggregated status check for branch protection
+
+### Release & Publish
+
+Automated via [Release Please](https://github.com/googleapis/release-please):
+
+1. Merge to `main` → Release Please creates a Release PR with changelog
+2. Merge Release PR → creates Git tag + GitHub Release
+3. Galaxy publish triggers automatically on release using centralized action
 
 ## Contributing
 
 Contributions, bug reports, and feature requests are welcome!
 
-- Fork the repository and create your branch from `main`.
-- Make your changes with clear, descriptive commit messages.
-- Ensure your code passes all Molecule and lint tests.
-- Submit a pull request describing your changes and the motivation.
-- For major changes, please open an issue first to discuss what you would like to change.
+- Fork the repository and create your branch from `main`
+- Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages:
+  - `feat:` — new features (minor version bump)
+  - `fix:` — bug fixes (patch version bump)
+  - `docs:` — documentation changes
+  - `refactor:` — code refactoring
+  - `test:` — test additions
+  - `ci:` — CI/CD changes
+  - `chore:` — maintenance tasks
+- Use branch naming convention: `feature/`, `bugfix/`, `hotfix/`, `docs/`, `refactor/`, `test/`, `chore/`, `ci/`
+- Ensure your code passes all CI checks (YAML lint, Ansible lint, Molecule tests)
+- Submit a pull request describing your changes
+
+## 📝 License
+
+This project is licensed under the Apache-2.0 License - see the LICENSE file for details.
+
+## 👥 Author Information
+
+This role was created by [Grzegorz Franus](https://github.com/grzegorzfranus).
