@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.0.1...v1.1.0) (2026-05-21)
+
+
+### Features
+
+* migrate to centralized CI, Release Please, and Galaxy publish ([#1](https://github.com/grzegorzfranus/ansible-role-docker/issues/1)) ([26a9614](https://github.com/grzegorzfranus/ansible-role-docker/commit/26a96145d12a201bc28a74ed8d3ea87e289eb6f1))
+
 ## [1.0.1] - 2025-08-13
 ### Removed ❌
 - Molecule verify: removed strict `daemon.json` content assertion that caused false failures across distros/runtime setups
