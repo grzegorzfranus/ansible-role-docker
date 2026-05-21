@@ -1,19 +1,7 @@
 ---
-# =============================================================================
-# Ansible Role: Docker - Network Creation (Optional)
-# =============================================================================
-# Create user-defined Docker networks using the module if available, otherwise
-# fall back to the docker CLI to ensure functionality without extra collections.
-#
-# Flow:
-# 1. Attempt creation via community.docker.docker_network
-# 2. Fallback creation via docker CLI
-# =============================================================================
+# Docker Network — Create user-defined Docker networks.
 
-# -----------------------------------------------------------------------------
-# 1. Create Networks via Module
-# -----------------------------------------------------------------------------
-- name: ⚙️ Docker | network | Create user-defined networks via module
+- name: Docker | network | Create user-defined networks via module
   community.docker.docker_network:
     name: "{{ item.name }}"
     driver: "{{ item.driver | default('bridge') }}"
@@ -21,15 +9,12 @@
       {{ [{'subnet': item.subnet}] if item.subnet is defined else omit }}
     state: present
   loop: "{{ docker_networks }}"
-  register: docker_network_module_result
+  register: __docker_network_module_result
   ignore_errors: true
-  when: >
-    item.name is defined
+  when:
+    - item.name is defined
 
-# -----------------------------------------------------------------------------
-# 2. Fallback via CLI
-# -----------------------------------------------------------------------------
-- name: ⚙️ Docker | network | Fallback creation via docker CLI when module not available
+- name: Docker | network | Fallback creation via docker CLI when module not available
   ansible.builtin.command: >-
     docker network create
     --driver {{ item.driver | default('bridge') }}
@@ -37,6 +22,7 @@
     {{ item.name }}
   args:
     creates: "/var/lib/docker/network/files/local-kv.db"
-  when: >
-    item.name is defined and (docker_network_module_result is failed)
+  when:
+    - item.name is defined
+    - __docker_network_module_result is failed
   loop: "{{ docker_networks }}"

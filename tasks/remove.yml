@@ -1,0 +1,145 @@
+---
+# Docker Remove — Clean uninstall of Docker and all configuration.
+
+- name: Docker | remove | Stop and disable service (systemd)
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ __docker_service_name }}"
+    state: stopped
+    enabled: false
+    daemon_reload: true
+  failed_when: false
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Docker | remove | Stop and disable prune timer
+  become: true
+  ansible.builtin.systemd:
+    name: docker-prune.timer
+    state: stopped
+    enabled: false
+  failed_when: false
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Docker | remove | Stop and disable backup timer
+  become: true
+  ansible.builtin.systemd:
+    name: docker-backup.timer
+    state: stopped
+    enabled: false
+  failed_when: false
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Docker | remove | Remove apt repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ __docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/{{ 'ubuntu' if ansible_facts.distribution | lower == 'ubuntu' else 'debian' }}
+      {{ __docker_apt_codename }} stable
+    filename: docker
+    state: absent
+  when:
+    - ansible_facts['os_family'] == 'Debian'
+
+- name: Docker | remove | Remove repository keyring (Debian)
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/docker.asc
+    state: absent
+  when:
+    - ansible_facts['os_family'] == 'Debian'
+
+- name: Docker | remove | Remove DNF repository (RedHat)
+  become: true
+  ansible.builtin.yum_repository:
+    name: docker-ce-stable
+    state: absent
+  when:
+    - ansible_facts['os_family'] == 'RedHat'
+
+- name: Docker | remove | Remove Docker packages
+  become: true
+  ansible.builtin.package:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+      - docker-buildx-plugin
+    state: absent
+
+- name: Docker | remove | Remove rsyslog configuration
+  become: true
+  ansible.builtin.file:
+    path: "/etc/rsyslog.d/{{ docker_rsyslog_conf_name }}"
+    state: absent
+
+- name: Docker | remove | Remove logrotate configuration
+  become: true
+  ansible.builtin.file:
+    path: "/etc/logrotate.d/docker"
+    state: absent
+
+- name: Docker | remove | Remove systemd service override
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.service.d
+    state: absent
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Docker | remove | Remove systemd socket override
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.socket.d
+    state: absent
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Docker | remove | Remove prune systemd units
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/docker-prune.service
+    - /etc/systemd/system/docker-prune.timer
+
+- name: Docker | remove | Remove backup systemd units
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/docker-backup.service
+    - /etc/systemd/system/docker-backup.timer
+
+- name: Docker | remove | Remove backup script
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/bin/docker-backup
+    state: absent
+
+- name: Docker | remove | Remove audit rules
+  become: true
+  ansible.builtin.file:
+    path: /etc/audit/rules.d/docker.rules
+    state: absent
+
+- name: Docker | remove | Reload systemd if needed
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Docker | remove | Optionally remove log directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ docker_log_directory_path }}"
+    state: absent
+  when:
+    - docker_configure_rsyslog | bool

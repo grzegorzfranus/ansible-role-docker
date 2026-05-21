@@ -4,40 +4,33 @@ galaxy_info:
   author: Grzegorz Franus
   namespace: grzegorzfranus
   description: >
-    Install and configure Docker Engine from official repositories with secure defaults.
+    Ansible role for installing and configuring Docker Engine from official repositories
+    with secure defaults, daemon configuration, optional dedicated logging, scheduled
+    pruning and backups, and comprehensive validation with error reporting.
   license: Apache-2.0
   company: EWARE
-  min_ansible_version: "2.15"
+  min_ansible_version: "2.16"
 
   platforms:
     - name: Debian
       versions:
-        - "bookworm"
         - "bullseye"
-      galaxy_tags:
-        - debian
-        - debian12
-        - debian11
+        - "bookworm"
     - name: Ubuntu
       versions:
-        - "noble"
         - "jammy"
-      galaxy_tags:
-        - ubuntu
-        - ubuntu24
-        - ubuntu22
-    - name: Rocky
+        - "noble"
+    - name: EL
       versions:
-        - "9.0"
-      galaxy_tags:
-        - rocky
-        - rocky9
+        - "9"
 
   galaxy_tags:
     - docker
     - containerd
+    - containers
     - security
     - logging
     - devops
+    - systemd
 
 dependencies: []

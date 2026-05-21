@@ -1,0 +1,180 @@
+---
+# Docker Error Reporting — Comprehensive diagnostic collection for troubleshooting.
+
+- name: Docker | error | Collect current error context
+  ansible.builtin.set_fact:
+    __docker_error_report:
+      report_timestamp: "{{ ansible_facts['date_time'].iso8601 }}"
+      role_version: "{{ __docker_diagnostic_info.role_version }}"
+      failed_task: "{{ ansible_failed_task.name | default('Unknown task') }}"
+      error_message: "{{ ansible_failed_result.msg | default('No error message available') }}"
+      playbook_dir: "{{ playbook_dir | default('unknown') }}"
+      inventory_hostname: "{{ inventory_hostname }}"
+
+- name: Docker | error | Collect comprehensive system diagnostics
+  ansible.builtin.set_fact:
+    __docker_system_diagnostics:
+      os_info:
+        distribution: "{{ ansible_facts['distribution'] }}"
+        version: "{{ ansible_facts['distribution_version'] }}"
+        codename: "{{ ansible_facts['distribution_release'] }}"
+        major_version: "{{ ansible_facts['distribution_major_version'] }}"
+        os_family: "{{ ansible_facts['os_family'] }}"
+        kernel: "{{ ansible_facts['kernel'] }}"
+        architecture: "{{ ansible_facts['architecture'] }}"
+      hardware_info:
+        memory_total_mb: "{{ ansible_facts['memtotal_mb'] | default('unknown') }}"
+        memory_free_mb: "{{ ansible_facts['memfree_mb'] | default('unknown') }}"
+        cpu_cores: "{{ ansible_facts['processor_vcpus'] | default('unknown') }}"
+        cpu_model: "{{ ansible_facts['processor'][2] | default('unknown') }}"
+        virtualization_type: "{{ ansible_facts['virtualization_type'] | default('physical') }}"
+        virtualization_role: "{{ ansible_facts['virtualization_role'] | default('host') }}"
+      system_config:
+        hostname: "{{ ansible_facts['hostname'] }}"
+        fqdn: "{{ ansible_facts['fqdn'] }}"
+        timezone: "{{ ansible_facts['date_time'].tz }}"
+        uptime_seconds: "{{ ansible_facts['uptime_seconds'] | default('unknown') }}"
+        selinux_status: "{{ ansible_facts['selinux'].status | default('unknown') }}"
+        python_version: "{{ ansible_facts['python_version'] }}"
+
+- name: Docker | error | Collect package manager information
+  ansible.builtin.set_fact:
+    __docker_package_diagnostics:
+      package_manager: "{{ ansible_facts['pkg_mgr'] }}"
+      package_manager_available: "{{ __docker_pkg_mgr_check.rc == 0 if __docker_pkg_mgr_check is defined else 'unknown' }}"
+  when:
+    - docker_include_package_info | bool
+
+- name: Docker | error | Check current repository configuration (Debian)
+  ansible.builtin.find:
+    paths: "/etc/apt/sources.list.d"
+    patterns: "*docker*"
+  register: __docker_existing_repos
+  failed_when: false
+  when:
+    - docker_include_package_info | bool
+    - ansible_facts['os_family'] == 'Debian'
+
+- name: Docker | error | Check GPG keys (Debian)
+  ansible.builtin.find:
+    paths: "/etc/apt/keyrings"
+    patterns: "*docker*"
+  register: __docker_existing_keys
+  failed_when: false
+  when:
+    - docker_include_package_info | bool
+    - ansible_facts['os_family'] == 'Debian'
+
+- name: Docker | error | Check current repository configuration (RedHat)
+  ansible.builtin.find:
+    paths: "/etc/yum.repos.d"
+    patterns: "*docker*"
+  register: __docker_existing_repos
+  failed_when: false
+  when:
+    - docker_include_package_info | bool
+    - ansible_facts['os_family'] == 'RedHat'
+
+- name: Docker | error | Collect network configuration
+  ansible.builtin.set_fact:
+    __docker_network_diagnostics:
+      default_ipv4: "{{ ansible_default_ipv4 | default({}) }}"
+      default_ipv6: "{{ ansible_default_ipv6 | default({}) }}"
+      all_interfaces: "{{ ansible_interfaces | default([]) }}"
+      dns_nameservers: "{{ ansible_dns.nameservers | default([]) }}"
+      dns_search: "{{ ansible_dns.search | default([]) }}"
+      repository_connectivity: "{{ __docker_repo_connectivity.status | default('not_tested') if __docker_repo_connectivity is defined else 'not_tested' }}"
+      http_proxy: "{{ ansible_env.HTTP_PROXY | default(ansible_env.http_proxy) | default('none') }}"
+      https_proxy: "{{ ansible_env.HTTPS_PROXY | default(ansible_env.https_proxy) | default('none') }}"
+      no_proxy: "{{ ansible_env.NO_PROXY | default(ansible_env.no_proxy) | default('none') }}"
+  when:
+    - docker_include_network_info | bool
+
+- name: Docker | error | Check Docker service status
+  ansible.builtin.systemd:
+    name: "{{ __docker_service_name }}"
+  register: __docker_service_error_status
+  failed_when: false
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Docker | error | Check if Docker binary exists
+  ansible.builtin.stat:
+    path: "/usr/bin/docker"
+  register: __docker_binary_check
+
+- name: Docker | error | Get Docker version if available
+  ansible.builtin.command: "/usr/bin/docker version --format '{{ '{{' }}.Server.Version{{ '}}' }}'"
+  register: __docker_version_check
+  failed_when: false
+  changed_when: false
+  when:
+    - __docker_binary_check.stat.exists | default(false)
+
+- name: Docker | error | Collect systemd journal logs
+  ansible.builtin.command: "journalctl -u {{ __docker_service_name }} --lines={{ docker_error_log_lines }} --no-pager"
+  register: __docker_journal_logs
+  failed_when: false
+  changed_when: false
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+    - docker_error_log_lines > 0
+
+- name: Docker | error | Collect system logs
+  ansible.builtin.command: "tail -n {{ docker_error_log_lines }} {{ __docker_os_syslog_path | default('/var/log/syslog') }}"
+  register: __docker_syslog
+  failed_when: false
+  changed_when: false
+  when:
+    - docker_error_log_lines > 0
+
+- name: Docker | error | Generate comprehensive error report
+  ansible.builtin.set_fact:
+    __docker_error_report_full:
+      report_info:
+        timestamp: "{{ __docker_error_report.report_timestamp }}"
+        role_version: "{{ __docker_error_report.role_version }}"
+        ansible_version: "{{ ansible_version.full }}"
+        failed_task: "{{ __docker_error_report.failed_task }}"
+        error_message: "{{ __docker_error_report.error_message }}"
+        target_host: "{{ inventory_hostname }}"
+      system: "{{ __docker_system_diagnostics }}"
+      packages: "{{ __docker_package_diagnostics | default({}) }}"
+      network: "{{ __docker_network_diagnostics | default({}) }}"
+      service:
+        binary_exists: "{{ __docker_binary_check.stat.exists | default(false) }}"
+        binary_path: "{{ __docker_binary_check.stat.path | default('not_found') }}"
+        version: "{{ __docker_version_check.stdout | default('not_available') if __docker_version_check is defined else 'not_available' }}"
+        service_status: "{{ __docker_service_error_status | default({}) }}"
+      role_configuration:
+        state: "{{ docker_state }}"
+        service_enabled: "{{ docker_service_enabled }}"
+        package_state: "{{ docker_package_state }}"
+        configure_rsyslog: "{{ docker_configure_rsyslog }}"
+        prune_enabled: "{{ docker_prune_enabled }}"
+        backup_enabled: "{{ docker_backup_enabled }}"
+      repository:
+        existing_repos: "{{ __docker_existing_repos.files | default([]) | map(attribute='path') | list }}"
+        existing_keys: "{{ __docker_existing_keys.files | default([]) | map(attribute='path') | list }}"
+      logs:
+        journal: "{{ __docker_journal_logs.stdout | default('not_collected') if __docker_journal_logs is defined else 'not_available' }}"
+        syslog: "{{ __docker_syslog.stdout | default('not_collected') if __docker_syslog is defined else 'not_available' }}"
+
+- name: Docker | error | Display detailed error report
+  ansible.builtin.debug:
+    msg:
+      - "DOCKER ROLE ERROR REPORT"
+      - "{{ __docker_error_report_full.report_info.timestamp }}"
+      - "Task: {{ __docker_error_report_full.report_info.failed_task }}"
+      - "Error: {{ __docker_error_report_full.report_info.error_message }}"
+      - "System: {{ __docker_error_report_full.system.os_info.distribution }} {{ __docker_error_report_full.system.os_info.version }}"
+      - "Include this report when contacting support"
+
+- name: Docker | error | Save error report to file
+  ansible.builtin.copy:
+    content: "{{ __docker_error_report_full | to_nice_yaml }}"
+    dest: "/tmp/docker-role-error-{{ ansible_facts['date_time'].epoch }}.yaml"
+    mode: '0644'
+  delegate_to: localhost
+  when:
+    - docker_enhanced_error_reporting | bool

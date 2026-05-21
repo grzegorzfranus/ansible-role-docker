@@ -1,25 +1,68 @@
 ---
-# General variables derived per OS
+# Ansible Role: Docker - Internal constants and computed values
+# These are NOT user-overridable. All use double-underscore prefix per CoP §3.1.4.
 
-# Service name is consistent across platforms but exposed for overrides
-docker_service_name: docker
+# Service name — constant across all supported distributions
+__docker_service_name: "docker"
 
 # Map Ansible arch to Debian/Ubuntu repo arch naming
-docker_apt_arch_map:
+__docker_apt_arch_map:
   x86_64: amd64
   aarch64: arm64
   armv7l: armhf
   armv6l: armhf
 
-docker_apt_arch: "{{ docker_apt_arch_map.get(ansible_facts.architecture, ansible_facts.architecture) }}"
+__docker_apt_arch: "{{ __docker_apt_arch_map[ansible_facts.architecture] | default(ansible_facts.architecture) }}"
 
-# APT codename (can be overridden per OS vars)
-docker_apt_codename: "{{ ansible_facts.distribution_release | lower }}"
+# APT codename (overridden per OS vars)
+__docker_apt_codename: "{{ ansible_facts.distribution_release | lower }}"
 
-# YUM/DNF repository settings (can be overridden per OS vars)
-docker_yum_baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
-docker_yum_gpgkey: "https://download.docker.com/linux/centos/gpg"
+# YUM/DNF repository settings (overridden per OS vars)
+__docker_yum_baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
+__docker_yum_gpgkey: "https://download.docker.com/linux/centos/gpg"
 
-# Rsyslog configuration (managed via vars as requested)
-docker_rsyslog_conf_name: "99-docker.conf"
-docker_rsyslog_imjournal_filecreatemode: "0644"
+# OS-specific logging defaults (overridden by OS-specific vars files)
+__docker_os_log_user: "{{ docker_rsyslog_log_file_owner }}"
+__docker_os_log_group: "{{ docker_rsyslog_log_file_group }}"
+__docker_os_syslog_path: "/var/log/syslog"
+
+# Supported architectures
+__docker_supported_architectures:
+  - "x86_64"
+  - "aarch64"
+
+# Supported package managers
+__docker_supported_package_managers:
+  - "apt"
+  - "dnf"
+
+# System detection
+__docker_system_detection:
+  os_family: "{{ ansible_facts['os_family'] }}"
+  distribution: "{{ ansible_facts['distribution'] }}"
+  version: "{{ ansible_facts['distribution_version'] }}"
+  major_version: "{{ ansible_facts['distribution_major_version'] }}"
+  codename: "{{ ansible_facts['distribution_release'] }}"
+  architecture: "{{ ansible_facts['architecture'] }}"
+  kernel: "{{ ansible_facts['kernel'] }}"
+  package_manager: "{{ ansible_facts['pkg_mgr'] }}"
+  service_manager: "{{ ansible_facts['service_mgr'] }}"
+
+# Diagnostic info for error reporting
+__docker_diagnostic_info:
+  role_version: "2.0.0"
+  execution_timestamp: "{{ ansible_facts['date_time'].iso8601 }}"
+  ansible_version: "{{ ansible_version.full }}"
+  target_host: "{{ inventory_hostname }}"
+  connection_type: "{{ ansible_connection }}"
+  python_version: "{{ ansible_facts['python_version'] }}"
+
+# Network diagnostic endpoints
+__docker_connectivity_endpoints:
+  repository: "https://download.docker.com"
+
+# Log file locations
+__docker_log_locations:
+  systemd: "/var/log/docker.log"
+  journal: "journalctl -u docker"
+  syslog: "{{ __docker_os_syslog_path | default('/var/log/syslog') }}"

@@ -1,54 +1,45 @@
 ---
-# =============================================================================
-# Ansible Role: Docker - Logging Tasks (rsyslog + file)
-# =============================================================================
-# This file optionally captures dockerd journald logs into a dedicated file
-# managed by rsyslog, with rotation handled by logrotate.
-#
-# Flow:
-# 1. Ensure log directory exists
-# 2. Ensure log file exists with proper ownership/permissions
-# 3. Deploy rsyslog configuration and restart rsyslog
-#
-# These tasks are customizable via role variables.
-# =============================================================================
+# Docker Logging — Configure rsyslog, logrotate, and log file management.
 
-# -----------------------------------------------------------------------------
-# 1. Log Directory
-# -----------------------------------------------------------------------------
-- name: ⚙️ Docker | logging | Ensure custom log directory exists (non-/var/log)
+- name: Docker | logging | Ensure custom log directory exists
   become: true
   ansible.builtin.file:
     path: "{{ docker_log_directory_path }}"
     state: directory
-    owner: "{{ docker_rsyslog_log_file_owner }}"
-    group: "{{ docker_rsyslog_log_file_group }}"
+    owner: "{{ __docker_os_log_user | default(docker_rsyslog_log_file_owner) }}"
+    group: "{{ __docker_os_log_group | default(docker_rsyslog_log_file_group) }}"
     mode: '0755'
-  when: >
-    docker_log_directory_path | length > 0 and docker_log_directory_path != '/var/log'
+  when:
+    - docker_log_directory_path | length > 0
+    - docker_log_directory_path != '/var/log'
 
-# -----------------------------------------------------------------------------
-# 2. Log File
-# -----------------------------------------------------------------------------
-- name: ⚙️ Docker | logging | Compute log file path
+- name: Docker | logging | Compute log file path
   ansible.builtin.set_fact:
-    docker_log_file_path: >-
+    __docker_log_file_path: >-
       {{ (docker_log_directory_path | length > 0)
           | ternary(docker_log_directory_path ~ '/docker.log', '/var/log/docker.log') }}
 
-- name: ⚙️ Docker | logging | Ensure log file exists with proper permissions
+- name: Docker | logging | Ensure log file exists with proper permissions
   become: true
   ansible.builtin.file:
-    path: "{{ docker_log_file_path }}"
+    path: "{{ __docker_log_file_path }}"
     state: touch
-    owner: "{{ docker_rsyslog_log_file_owner }}"
-    group: "{{ docker_rsyslog_log_file_group }}"
+    owner: "{{ __docker_os_log_user | default(docker_rsyslog_log_file_owner) }}"
+    group: "{{ __docker_os_log_group | default(docker_rsyslog_log_file_group) }}"
     mode: "{{ docker_rsyslog_log_file_mode }}"
+    modification_time: preserve
+    access_time: preserve
 
-# -----------------------------------------------------------------------------
-# 3. Rsyslog Configuration
-# -----------------------------------------------------------------------------
-- name: ⚙️ Docker | logging | Configure rsyslog for Docker
+- name: Docker | logging | Ensure rsyslog.d directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/rsyslog.d
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Docker | logging | Configure rsyslog for Docker
   become: true
   ansible.builtin.template:
     src: rsyslog/docker.conf.j2
@@ -56,5 +47,40 @@
     owner: root
     group: root
     mode: '0644'
-  notify:
-    - "Docker | handlers | Restart rsyslog service"
+    backup: true
+  notify: Docker | handlers | Restart rsyslog
+
+- name: Docker | logging | Check if archive log directory exists
+  become: true
+  ansible.builtin.stat:
+    path: "{{ docker_logrotate_options.archive_directory_path | default(docker_log_directory_path) }}"
+  register: __docker_log_archive_stat
+
+- name: Docker | logging | Create archive log directory if needed
+  become: true
+  ansible.builtin.file:
+    path: "{{ docker_logrotate_options.archive_directory_path | default(docker_log_directory_path) }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when:
+    - not __docker_log_archive_stat.stat.exists
+
+- name: Docker | logging | Deploy logrotate configuration file
+  become: true
+  ansible.builtin.template:
+    src: logrotate/docker.j2
+    dest: /etc/logrotate.d/docker
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+
+- name: Docker | logging | Display logging configuration status
+  ansible.builtin.debug:
+    msg:
+      - "Logging: {{ __docker_log_file_path }} ({{ docker_logrotate_options.frequency }})"
+    verbosity: 1
+  when:
+    - docker_collect_system_info | bool

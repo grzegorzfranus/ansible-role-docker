@@ -1,0 +1,129 @@
+---
+# Docker Validate — System validation, smart detection, and connectivity checks.
+
+- name: Docker | validate | Check system architecture support
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['architecture'] in __docker_supported_architectures
+    fail_msg: "Unsupported architecture '{{ ansible_facts['architecture'] }}'. Supported: {{ __docker_supported_architectures | join(', ') }}"
+    success_msg: "Architecture supported: {{ ansible_facts['architecture'] }}"
+  when:
+    - docker_validate_prerequisites | bool
+
+- name: Docker | validate | Validate operating system support
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] in ['Debian', 'RedHat']
+    fail_msg: "Unsupported OS family '{{ ansible_facts['os_family'] }}'. Supported: Debian (Ubuntu 22.04/24.04, Debian 11/12), RedHat (EL9)."
+    success_msg: "OS family supported: {{ ansible_facts['os_family'] }}"
+  when:
+    - docker_validate_prerequisites | bool
+
+- name: Docker | validate | Check distribution version support
+  ansible.builtin.assert:
+    that:
+      - >-
+        (ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] in ['22.04', '24.04']) or
+        (ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] in ['11', '12']) or
+        (ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9')
+    fail_msg: "Unsupported: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}. Supported: Ubuntu 22.04/24.04, Debian 11/12, EL9"
+    success_msg: "Distribution supported: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
+  when:
+    - docker_validate_prerequisites | bool
+
+- name: Docker | validate | Detect package manager availability
+  ansible.builtin.command: "which {{ ansible_facts['pkg_mgr'] }}"
+  register: __docker_pkg_mgr_check
+  failed_when: false
+  changed_when: false
+  when:
+    - docker_validate_prerequisites | bool
+
+- name: Docker | validate | Assert package manager is functional
+  ansible.builtin.assert:
+    that:
+      - __docker_pkg_mgr_check.rc == 0
+      - ansible_facts['pkg_mgr'] in __docker_supported_package_managers
+    fail_msg: "Package manager '{{ ansible_facts['pkg_mgr'] }}' not found or not supported"
+    success_msg: "Package manager available: {{ ansible_facts['pkg_mgr'] }}"
+  when:
+    - docker_validate_prerequisites | bool
+
+- name: Docker | validate | Test connectivity to Docker repository
+  ansible.builtin.uri:
+    url: "{{ __docker_connectivity_endpoints.repository }}"
+    method: HEAD
+    timeout: "{{ docker_connectivity_timeout }}"
+    validate_certs: true
+  register: __docker_repo_connectivity
+  failed_when: false
+  when:
+    - docker_validate_connectivity | bool
+
+- name: Docker | validate | Warn about repository connectivity
+  ansible.builtin.debug:
+    msg: "Warning: Cannot reach Docker repository (status: {{ __docker_repo_connectivity.status | default('No response') }}). Installation may still succeed."
+  when:
+    - docker_validate_connectivity | bool
+    - __docker_repo_connectivity is defined
+    - (__docker_repo_connectivity.status | default(0)) != 200
+
+- name: Docker | validate | Collect comprehensive system information
+  ansible.builtin.set_fact:
+    __docker_system_info:
+      os: "{{ ansible_facts['distribution'] }}"
+      version: "{{ ansible_facts['distribution_version'] }}"
+      codename: "{{ ansible_facts['distribution_release'] }}"
+      architecture: "{{ ansible_facts['architecture'] }}"
+      kernel: "{{ ansible_facts['kernel'] }}"
+      package_manager: "{{ ansible_facts['pkg_mgr'] }}"
+      service_manager: "{{ ansible_facts['service_mgr'] }}"
+      timestamp: "{{ ansible_facts['date_time'].iso8601 }}"
+      ansible_version: "{{ ansible_version.full }}"
+      role_version: "{{ __docker_diagnostic_info.role_version }}"
+      target_host: "{{ inventory_hostname }}"
+  when:
+    - docker_collect_system_info | bool
+
+- name: Docker | validate | Collect hardware information
+  ansible.builtin.set_fact:
+    __docker_hardware_info:
+      memory_mb: "{{ ansible_facts['memtotal_mb'] }}"
+      cpu_cores: "{{ ansible_facts['processor_vcpus'] }}"
+      cpu_model: "{{ ansible_facts['processor'][2] | default('unknown') }}"
+      disk_space: "{{ ansible_facts['mounts'] | selectattr('mount', 'equalto', '/') | map(attribute='size_total') | first | default(0) }}"
+  when:
+    - docker_collect_system_info | bool
+    - docker_include_hardware_info | bool
+
+- name: Docker | validate | Collect network information
+  ansible.builtin.set_fact:
+    __docker_network_info:
+      default_ipv4: "{{ ansible_facts['default_ipv4'].address | default('none') }}"
+      default_interface: "{{ ansible_facts['default_ipv4'].interface | default('none') }}"
+      hostname: "{{ ansible_facts['hostname'] }}"
+      fqdn: "{{ ansible_facts['fqdn'] }}"
+      nameservers: "{{ ansible_facts['dns'].nameservers | default([]) }}"
+  when:
+    - docker_collect_system_info | bool
+    - docker_include_network_info | bool
+
+- name: Docker | validate | Display system validation summary
+  ansible.builtin.debug:
+    msg:
+      - "Validation: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} ({{ ansible_facts['architecture'] }})"
+      - "   Package Manager: {{ ansible_facts['pkg_mgr'] }} | Service Manager: {{ ansible_facts['service_mgr'] }}"
+    verbosity: 1
+  when:
+    - docker_collect_system_info | bool
+
+- name: Docker | validate | Setup error reporting context
+  ansible.builtin.set_fact:
+    __docker_error_context:
+      validation_completed: true
+      validation_timestamp: "{{ ansible_facts['date_time'].iso8601 }}"
+      detected_issues: []
+      connectivity_status:
+        repository: "{{ 'ok' if (__docker_repo_connectivity.status | default(0) == 200) else 'failed' }}"
+  when:
+    - docker_enhanced_error_reporting | bool
