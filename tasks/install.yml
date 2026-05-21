@@ -2,7 +2,7 @@
 # Docker Install — Install Docker packages and verify binaries.
 
 - name: Docker | install | Check if Docker is already installed
-  ansible.builtin.command: "docker version --format '{{ '{{' }}.Server.Version{{ '}}' }}'"
+  ansible.builtin.command: "docker --version"
   register: __docker_existing_version
   failed_when: false
   changed_when: false
@@ -53,7 +53,7 @@
     - ansible_facts['os_family'] == 'RedHat'
 
 - name: Docker | install | Verify Docker installation
-  ansible.builtin.command: "docker version --format '{{ '{{' }}.Server.Version{{ '}}' }}'"
+  ansible.builtin.command: "docker --version"
   register: __docker_installed_version
   changed_when: false
   failed_when: __docker_installed_version.rc != 0
@@ -87,7 +87,7 @@
 - name: Docker | install | Report installation results
   ansible.builtin.debug:
     msg:
-      - "Docker {{ __docker_installed_version.stdout }} installed"
+      - "{{ __docker_installed_version.stdout | default('Docker installed') }}"
       - "   Changed: {{ 'Yes' if __docker_installation_result.changed else 'No (already installed)' }}"
     verbosity: 1
   when:
@@ -96,7 +96,7 @@
 - name: Docker | install | Store installation information
   ansible.builtin.set_fact:
     __docker_installation_info:
-      version: "{{ __docker_installed_version.stdout }}"
+      version: "{{ __docker_installed_version.stdout | default('unknown') }}"
       installation_changed: "{{ __docker_installation_result.changed }}"
       client_binary_path: "/usr/bin/docker"
       daemon_binary_path: "/usr/bin/dockerd"
