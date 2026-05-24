@@ -40,4 +40,4 @@
       failed_when: systemctl_status.rc > 1
 
   roles:
-    - role: grzegorzfranus.docker
+    - role: ../../..
