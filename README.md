@@ -407,11 +407,12 @@ ansible-role-docker/
 Runs on every Pull Request via centralized reusable workflow:
 
 1. **Branch Name Lint** — enforces naming conventions (`feature/`, `bugfix/`, etc.)
-2. **YAML Lint** — validates all YAML files
-3. **Ansible Lint** — enforces best practices and guidelines compliance
-4. **Security Scan** — TruffleHog secret detection
-5. **Molecule Tests** — matrix across Debian 11/12, Ubuntu 22.04/24.04, and Rocky Linux 9
-6. **Merge Check** — aggregated status check for branch protection
+2. **PR Title Lint** — enforces Conventional Commits naming conventions on PR titles
+3. **YAML Lint** — validates all YAML files
+4. **Ansible Lint** — enforces best practices and guidelines compliance
+5. **Security Scan** — TruffleHog secret detection
+6. **Molecule Tests** — matrix across Debian 11/12, Ubuntu 22.04/24.04, and Rocky Linux 9
+7. **Merge Check** — caller-level gate for branch protection
 
 ### Release & Publish
 
