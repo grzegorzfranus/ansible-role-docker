@@ -332,6 +332,33 @@ To remove Docker and its configuration from a host:
 - `backup` - Backup timer tasks
 - `audit` - Audit configuration tasks
 
+## 🔧 Troubleshooting
+
+### Service Issues
+
+```bash
+# Check if docker daemon is running
+sudo systemctl status docker
+
+# View detailed systemd logs for docker
+sudo journalctl -u docker -f
+
+# Restart docker service
+sudo systemctl restart docker
+```
+
+### Permission Issues
+
+If you cannot run `docker` commands without `sudo`, verify that your user is added to the `docker` group:
+
+```bash
+# Check group membership
+groups
+
+# Add current user to docker group (requires re-login)
+sudo usermod -aG docker $USER
+```
+
 ## 📁 File Structure
 
 ```
@@ -398,6 +425,25 @@ ansible-role-docker/
     ├── redhat_9.yml         # EL9 specific variables (Rocky/RHEL/Alma 9)
     ├── ubuntu_22.04.yml     # Ubuntu 22.04 specific variables
     └── ubuntu_24.04.yml     # Ubuntu 24.04 specific variables
+```
+
+## Example Playbook
+
+```yaml
+---
+- name: Configure Docker Engine
+  hosts: all
+  become: true
+  vars:
+    docker_users:
+      - "ubuntu"
+    docker_daemon_config:
+      log-driver: "json-file"
+      log-opts:
+        max-size: "10m"
+        max-file: "3"
+  roles:
+    - role: grzegorzfranus.docker
 ```
 
 ## CI/CD Pipeline
