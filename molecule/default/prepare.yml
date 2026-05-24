@@ -10,9 +10,18 @@
 ---
 - name: 🧪 Docker | molecule | Prepare
   hosts: all
-  gather_facts: false
+  gather_facts: true
 
   tasks:
+    - name: 🧪 Docker | molecule | prepare | Disable EPEL repository (RedHat)
+      ansible.builtin.shell: |
+        if [ -f /etc/yum.repos.d/epel.repo ]; then
+          sed -i 's/enabled=1/enabled=0/g' /etc/yum.repos.d/epel*.repo || true
+        fi
+      failed_when: false
+      changed_when: false
+      when: ansible_facts['os_family'] == "RedHat"
+
     - name: 🧪 Docker | molecule | prepare | Fix /etc/shadow permissions
       register: etc_shadow
       ansible.builtin.shell:
