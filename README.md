@@ -363,10 +363,18 @@ sudo usermod -aG docker $USER
 
 ```
 ansible-role-docker/
-├── .github/                  # GitHub Actions workflows
-│   └── workflows/           # CI/CD automation
-│       ├── ci.yml           # CI pipeline (reusable ansible-ci.yml)
-│       └── release.yml      # Release Please + Galaxy publish
+├── .github/
+│   ├── ISSUE_TEMPLATE/                # Issue templates for bug, feature, task
+│   │   ├── bug_report.yml
+│   │   ├── config.yml
+│   │   ├── feature_request.yml
+│   │   └── task.yml
+│   ├── PULL_REQUEST_TEMPLATE/         # Pull request description template
+│   │   └── pull_request_template.md
+│   ├── workflows/
+│   │   ├── ci.yml                     # CI pipeline
+│   │   └── release.yml                # Release Please + Galaxy publish
+│   └── dependabot.yml                 # Dependabot configuration for GitHub Actions
 ├── .release-please-manifest.json # Release Please version manifest
 ├── release-please-config.json    # Release Please configuration
 ├── CHANGELOG.md              # Version history and changes
@@ -473,18 +481,10 @@ Automated via [Release Please](https://github.com/googleapis/release-please):
 Contributions, bug reports, and feature requests are welcome!
 
 - Fork the repository and create your branch from `main`
-- Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages:
-  - `feat:` — new features (minor version bump)
-  - `fix:` — bug fixes (patch version bump)
-  - `docs:` — documentation changes
-  - `refactor:` — code refactoring
-  - `test:` — test additions
-  - `ci:` — CI/CD changes
-  - `chore:` — maintenance tasks
-- Use branch naming convention: `feature/`, `bugfix/`, `hotfix/`, `docs/`, `refactor/`, `test/`, `chore/`, `ci/`
+- Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages
 - Ensure your code passes all CI checks (YAML lint, Ansible lint, Molecule tests)
-- Submit a pull request describing your changes
-- For major changes, please open an issue first to discuss what you would like to change
+- Submit a pull request describing your changes (a template is available under `.github/PULL_REQUEST_TEMPLATE/pull_request_template.md` to help structure your PR description)
+- For major changes, please open an issue first to discuss what you would like to change (issue templates for bug reports, feature requests, and tasks are available under `.github/ISSUE_TEMPLATE/`)
 
 ## 📝 License
 
