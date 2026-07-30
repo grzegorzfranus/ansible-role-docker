@@ -49,7 +49,7 @@
   ansible.builtin.find:
     paths: "/etc/apt/sources.list.d"
     patterns: "*docker*"
-  register: __docker_existing_repos
+  register: __docker_apt_existing_repos
   failed_when: false
   when:
     - docker_include_package_info | bool
@@ -69,7 +69,7 @@
   ansible.builtin.find:
     paths: "/etc/yum.repos.d"
     patterns: "*docker*"
-  register: __docker_existing_repos
+  register: __docker_dnf_existing_repos
   failed_when: false
   when:
     - docker_include_package_info | bool
@@ -154,7 +154,10 @@
         prune_enabled: "{{ docker_prune_enabled }}"
         backup_enabled: "{{ docker_backup_enabled }}"
       repository:
-        existing_repos: "{{ __docker_existing_repos.files | default([]) | map(attribute='path') | list }}"
+        existing_repos: >-
+          {{ (__docker_apt_existing_repos.files | default([]) +
+              __docker_dnf_existing_repos.files | default([]))
+             | map(attribute='path') | list }}
         existing_keys: "{{ __docker_existing_keys.files | default([]) | map(attribute='path') | list }}"
       logs:
         journal: "{{ __docker_journal_logs.stdout | default('not_collected') if __docker_journal_logs is defined else 'not_available' }}"

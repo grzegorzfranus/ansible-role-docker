@@ -1,5 +1,5 @@
 ---
 # Ubuntu 22.04 (jammy)
 __docker_apt_codename: "jammy"
-__docker_os_log_user: "syslog"
-__docker_os_log_group: "adm"
+__docker_os_log_user_default: "syslog"
+__docker_os_log_group_default: "adm"

@@ -22,8 +22,10 @@ __docker_yum_baseurl: "https://download.docker.com/linux/centos/$releasever/$bas
 __docker_yum_gpgkey: "https://download.docker.com/linux/centos/gpg"
 
 # OS-specific logging defaults (overridden by OS-specific vars files)
-__docker_os_log_user: "{{ docker_rsyslog_log_file_owner }}"
-__docker_os_log_group: "{{ docker_rsyslog_log_file_group }}"
+__docker_os_log_user_default: "root"
+__docker_os_log_group_default: "root"
+__docker_log_file_owner: "{{ docker_rsyslog_log_file_owner | default(__docker_os_log_user_default, true) }}"
+__docker_log_file_group: "{{ docker_rsyslog_log_file_group | default(__docker_os_log_group_default, true) }}"
 __docker_os_syslog_path: "/var/log/syslog"
 
 # Supported architectures

@@ -126,14 +126,14 @@ argument_specs:
         default: "0644"
 
       docker_rsyslog_log_file_owner:
-        description: "Owner of the Docker log file"
+        description: "Owner of the Docker log file (empty string defaults to OS distribution default)"
         type: str
-        default: "root"
+        default: ""
 
       docker_rsyslog_log_file_group:
-        description: "Group of the Docker log file"
+        description: "Group of the Docker log file (empty string defaults to OS distribution default)"
         type: str
-        default: "adm"
+        default: ""
 
       docker_rsyslog_log_file_mode:
         description: "Mode of the Docker log file"
@@ -189,8 +189,8 @@ argument_specs:
         default:
           enabled: true
           mode: "0640"
-          owner: "root"
-          group: "adm"
+          owner: ""
+          group: ""
         options:
           enabled:
             description: "Create a fresh log file after rotation"

@@ -6,8 +6,8 @@
   ansible.builtin.file:
     path: "{{ docker_log_directory_path }}"
     state: directory
-    owner: "{{ __docker_os_log_user | default(docker_rsyslog_log_file_owner) }}"
-    group: "{{ __docker_os_log_group | default(docker_rsyslog_log_file_group) }}"
+    owner: "{{ __docker_log_file_owner }}"
+    group: "{{ __docker_log_file_group }}"
     mode: '0755'
   when:
     - docker_log_directory_path | length > 0
@@ -24,8 +24,8 @@
   ansible.builtin.file:
     path: "{{ __docker_log_file_path }}"
     state: touch
-    owner: "{{ __docker_os_log_user | default(docker_rsyslog_log_file_owner) }}"
-    group: "{{ __docker_os_log_group | default(docker_rsyslog_log_file_group) }}"
+    owner: "{{ __docker_log_file_owner }}"
+    group: "{{ __docker_log_file_group }}"
     mode: "{{ docker_rsyslog_log_file_mode }}"
     modification_time: preserve
     access_time: preserve
