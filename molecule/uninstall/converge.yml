@@ -1,0 +1,38 @@
+# =============================================================================
+# Ansible Role: Docker - Molecule Convergence Playbook (Uninstall Scenario)
+# =============================================================================
+
+---
+- name: Converge | Install Docker with extra features
+  hosts: all
+
+  pre_tasks:
+    - name: Converge | Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 600
+      changed_when: false
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Converge | Update dnf cache
+      ansible.builtin.dnf:
+        update_cache: true
+      changed_when: false
+      when: ansible_facts['os_family'] == "RedHat"
+
+  roles:
+    - role: ../../..
+      vars:
+        docker_configure_rsyslog: true
+        docker_prune_enabled: true
+        docker_backup_enabled: true
+        docker_audit_socket: true
+
+- name: "Converge | Remove Docker (docker_state: absent)"
+  hosts: all
+
+  roles:
+    - role: ../../..
+      vars:
+        docker_state: absent
+        docker_configure_rsyslog: true

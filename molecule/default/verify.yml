@@ -1,25 +1,20 @@
 # =============================================================================
-# Ansible Role: Docker - Molecule Verification Playbook
-# =============================================================================
-# Verify installation and configuration:
-# - Packages installed
-# - Service enabled and running
-# - daemon.json content
-# - Socket permissions
+# Ansible Role: Docker - Molecule Verification Playbook (Default Scenario)
 # =============================================================================
 
 ---
-- name: 🧪 Docker | molecule | Verify Role
+- name: Verify
   hosts: all
   gather_facts: true
 
   vars_files:
-    - ../../defaults/main.yml
-    - ../../vars/main.yml
+    - "../../defaults/main.yml"
+    - "../../vars/main.yml"
 
   tasks:
-    - name: 🧪 Docker | molecule | verify | Gather OS specific variables
-      include_vars: "{{ lookup('first_found', params) }}"
+    - name: Verify | Gather OS specific variables
+      ansible.builtin.include_vars:
+        file: "{{ lookup('ansible.builtin.first_found', params) }}"
       vars:
         params:
           files:
@@ -33,45 +28,123 @@
           paths:
             - "../../vars"
 
-    - name: 🧪 Docker | molecule | verify | Check docker package(s) present
-      ansible.builtin.package:
-        name: docker-ce
-        state: present
-      register: pkg_check
-      ignore_errors: true
+    - name: Verify | Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
 
-    - name: 🧪 Docker | molecule | verify | Docker service running
-      ansible.builtin.service:
-        name: docker
-        state: started
-        enabled: true
-      register: svc_check
-      ignore_errors: true
+    - name: Verify | Assert Docker packages installed
+      ansible.builtin.assert:
+        that:
+          - "'docker-ce' in ansible_facts.packages"
+          - "'docker-ce-cli' in ansible_facts.packages"
+          - "'containerd.io' in ansible_facts.packages"
+        fail_msg: "One or more required Docker packages (docker-ce, docker-ce-cli, containerd.io) are missing."
+        success_msg: "All required Docker packages are installed."
 
-    - name: 🧪 Docker | molecule | verify | Check daemon.json exists
+    - name: Verify | Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Verify | Assert Docker service running and enabled
+      ansible.builtin.assert:
+        that:
+          - "'docker.service' in ansible_facts.services"
+          - "ansible_facts.services['docker.service'].state == 'running'"
+          - "ansible_facts.services['docker.service'].status == 'enabled'"
+        fail_msg: "Docker service is not running or not enabled."
+        success_msg: "Docker service is running and enabled."
+
+    - name: Verify | Stat daemon.json
       ansible.builtin.stat:
         path: /etc/docker/daemon.json
-      register: daemon_stat
-      ignore_errors: true
+      register: __docker_daemon_stat
 
-    - name: 🧪 Docker | molecule | verify | Read daemon.json
+    - name: Verify | Slurp daemon.json
       ansible.builtin.slurp:
         src: /etc/docker/daemon.json
-      register: daemon_slurp
-      when: daemon_stat.stat.exists
+      register: __docker_daemon_slurp
+      when: __docker_daemon_stat.stat.exists
 
-    - name: 🧪 Docker | molecule | verify | Check docker socket permissions
+    - name: Verify | Assert daemon.json permissions and content
+      ansible.builtin.assert:
+        that:
+          - "__docker_daemon_stat.stat.exists"
+          - "__docker_daemon_stat.stat.mode == '0644'"
+          - "__docker_daemon_stat.stat.pw_name == 'root'"
+          - "__docker_daemon_stat.stat.gr_name == 'root'"
+          - "(__docker_daemon_slurp.content | b64decode | from_json)['log-driver'] == 'json-file'"
+          - "(__docker_daemon_slurp.content | b64decode | from_json)['log-opts']['max-size'] == '10m'"
+          - "(__docker_daemon_slurp.content | b64decode | from_json)['log-opts']['max-file'] == '3'"
+        fail_msg: "daemon.json is missing, has incorrect permissions, or invalid JSON content."
+        success_msg: "daemon.json exists, has correct 0644 root:root permissions, and valid JSON configuration."
+
+    - name: Verify | Stat docker.sock
       ansible.builtin.stat:
         path: /var/run/docker.sock
-      register: sock_stat
-      ignore_errors: true
+      register: __docker_sock_stat
 
-    - name: 🧪 Docker | molecule | verify | Show summary
-      ansible.builtin.debug:
-        msg: |
-          Docker Verification Summary:
-          ----------------------------
-          Package Installed: {{ pkg_check.failed | default(true) | ternary('FAIL', 'PASS') }}
-          Service Running/Enabled: {{ svc_check.failed | default(true) | ternary('FAIL', 'PASS') }}
-          daemon.json Exists: {{ daemon_stat.stat.exists | default(false) | ternary('PASS', 'FAIL') }}
-          Socket Mode: {{ sock_stat.stat.mode | default('NA') }}
+    - name: Verify | Assert docker.sock permissions
+      ansible.builtin.assert:
+        that:
+          - "__docker_sock_stat.stat.exists"
+          - "__docker_sock_stat.stat.gr_name == 'docker'"
+          - "__docker_sock_stat.stat.mode == '0660'"
+        fail_msg: "docker.sock has incorrect permissions or group ownership."
+        success_msg: "docker.sock exists with 0660 mode and docker group ownership."
+
+    - name: Verify | Check docker CLI version
+      ansible.builtin.command: docker --version
+      register: __docker_version_cmd
+      changed_when: false
+
+    - name: Verify | Assert docker CLI operational
+      ansible.builtin.assert:
+        that:
+          - "__docker_version_cmd.rc == 0"
+        fail_msg: "docker --version failed with exit code {{ __docker_version_cmd.rc }}."
+        success_msg: "docker CLI is functional."
+
+    - name: Verify | Get systemctl ExecStart for docker
+      ansible.builtin.command: systemctl show docker -p ExecStart
+      register: __docker_execstart_cmd
+      changed_when: false
+
+    - name: Verify | Stat default override.conf
+      ansible.builtin.stat:
+        path: /etc/systemd/system/docker.service.d/override.conf
+      register: __docker_override_stat
+
+    - name: Verify | Assert H1 regression guard
+      ansible.builtin.assert:
+        that:
+          - "'--containerd=' in __docker_execstart_cmd.stdout"
+          - "not __docker_override_stat.stat.exists"
+        fail_msg: "H1 regression detected: ExecStart missing --containerd= or unexpected override.conf exists."
+        success_msg: "H1 regression guard passed: ExecStart contains --containerd= and no override.conf exists by default."
+
+    - name: Verify | Check containerd process count
+      ansible.builtin.command: pgrep -c -x containerd
+      register: __containerd_pgrep_cmd
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | Assert single containerd process running
+      ansible.builtin.assert:
+        that:
+          - "__containerd_pgrep_cmd.rc == 0"
+          - "__containerd_pgrep_cmd.stdout | trim == '1'"
+        fail_msg: "Expected exactly 1 containerd process, found {{ __containerd_pgrep_cmd.stdout | trim }}."
+        success_msg: "Exactly one containerd process is running."
+
+    - name: Verify | Test container execution
+      ansible.builtin.command: docker run --rm hello-world
+      register: __docker_hello_cmd
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | Assert container execution succeeds
+      ansible.builtin.assert:
+        that:
+          - "__docker_hello_cmd.rc == 0"
+        fail_msg: "docker run hello-world failed: {{ __docker_hello_cmd.stderr }}"
+        success_msg: "docker run hello-world executed successfully."
+      when: __docker_hello_cmd.rc == 0 or 'Unable to find image' not in __docker_hello_cmd.stderr

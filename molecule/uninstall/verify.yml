@@ -1,0 +1,66 @@
+# =============================================================================
+# Ansible Role: Docker - Molecule Verification Playbook (Uninstall Scenario)
+# =============================================================================
+
+---
+- name: Verify
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Verify | Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Verify | Assert Docker packages are removed
+      ansible.builtin.assert:
+        that:
+          - "'docker-ce' not in ansible_facts.packages"
+          - "'docker-ce-cli' not in ansible_facts.packages"
+          - "'containerd.io' not in ansible_facts.packages"
+        fail_msg: "Docker packages are still present after uninstall."
+        success_msg: "Docker packages successfully removed."
+
+    - name: Verify | Stat uninstalled files and directories
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: __uninstall_stats
+      loop:
+        - /etc/rsyslog.d/99-docker.conf
+        - /etc/logrotate.d/docker
+        - /etc/systemd/system/docker.service.d
+        - /etc/systemd/system/docker.socket.d
+        - /etc/systemd/system/docker-prune.service
+        - /etc/systemd/system/docker-prune.timer
+        - /etc/systemd/system/docker-backup.service
+        - /etc/systemd/system/docker-backup.timer
+        - /usr/local/bin/docker-backup
+        - /etc/audit/rules.d/docker.rules
+
+    - name: Verify | Assert configuration and unit files are removed
+      ansible.builtin.assert:
+        that:
+          - "not item.stat.exists"
+        fail_msg: "{{ item.item }} still exists after uninstall."
+        success_msg: "{{ item.item }} successfully removed."
+      loop: "{{ __uninstall_stats.results }}"
+
+    - name: Verify | Stat /var/log directory (H2 Guard)
+      ansible.builtin.stat:
+        path: /var/log
+      register: __var_log_stat
+
+    - name: Verify | Find files in /var/log (H2 Guard)
+      ansible.builtin.find:
+        paths: /var/log
+        file_type: any
+      register: __var_log_files
+
+    - name: Verify | Assert /var/log preserved with contents (H2 Guard)
+      ansible.builtin.assert:
+        that:
+          - "__var_log_stat.stat.exists"
+          - "__var_log_stat.stat.isdir"
+          - "__var_log_files.matched > 0"
+        fail_msg: "H2 regression detected! /var/log was deleted or emptied during Docker role removal."
+        success_msg: "H2 regression guard passed: /var/log exists and retains files after removal with docker_log_directory_path=/var/log."
