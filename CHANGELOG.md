@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.3.1...v1.4.0) (2026-07-30)
+
+
+### Features
+
+* add support for Ubuntu 26.04 (Resolute) and Debian 13 (Trixie) ([#33](https://github.com/grzegorzfranus/ansible-role-docker/issues/33)) ([3f4d88d](https://github.com/grzegorzfranus/ansible-role-docker/commit/3f4d88d31b6b44a13428bd228d617d77387044d3))
+
 ## [1.3.1](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.3.0...v1.3.1) (2026-07-30)
 
 
