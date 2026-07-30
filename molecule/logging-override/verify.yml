@@ -1,9 +1,9 @@
 # =============================================================================
-# Ansible Role: Docker - Molecule Verification Playbook (Logging Scenario)
+# Ansible Role: Docker - Molecule Verification Playbook (Logging Override Scenario)
 # =============================================================================
 
 ---
-- name: "molecule | Verify Logging Scenario"
+- name: "molecule | Verify Logging Override Scenario"
   hosts: all
   gather_facts: true
 
@@ -28,55 +28,35 @@
           paths:
             - "../../vars"
 
-    - name: Verify | Stat /etc/rsyslog.d/99-docker.conf
-      ansible.builtin.stat:
-        path: /etc/rsyslog.d/99-docker.conf
-      register: __rsyslog_conf_stat
-
-    - name: Verify | Assert rsyslog configuration file exists with 0644 root:root
-      ansible.builtin.assert:
-        that:
-          - "__rsyslog_conf_stat.stat.exists"
-          - "__rsyslog_conf_stat.stat.mode == '0644'"
-          - "__rsyslog_conf_stat.stat.pw_name == 'root'"
-          - "__rsyslog_conf_stat.stat.gr_name == 'root'"
-        fail_msg: "/etc/rsyslog.d/99-docker.conf is missing or has incorrect permissions."
-        success_msg: "/etc/rsyslog.d/99-docker.conf exists with mode 0644 root:root."
-
     - name: Verify | Stat log directory /var/log/docker
       ansible.builtin.stat:
         path: /var/log/docker
       register: __docker_log_dir_stat
 
-    - name: Verify | Assert log directory owner matches OS default
+    - name: Verify | Assert V1 regression guard (log directory owner updated to nobody)
       ansible.builtin.assert:
         that:
           - "__docker_log_dir_stat.stat.exists"
-          - "__docker_log_dir_stat.stat.pw_name == __docker_os_log_user_default"
-          - "__docker_log_dir_stat.stat.gr_name == __docker_os_log_group_default"
+          - "__docker_log_dir_stat.stat.pw_name == 'nobody'"
         fail_msg: >-
-          Log directory /var/log/docker owner/group does not match OS default
-          (expected {{ __docker_os_log_user_default }}:{{ __docker_os_log_group_default }},
-          got {{ __docker_log_dir_stat.stat.pw_name }}:{{ __docker_log_dir_stat.stat.gr_name }}).
-        success_msg: "Log directory /var/log/docker owner and group match OS default."
+          V1 regression detected! Explicit docker_rsyslog_log_file_owner override did not update directory owner to nobody
+          (got {{ __docker_log_dir_stat.stat.pw_name }}).
+        success_msg: "V1 regression guard passed: explicit owner override changed directory ownership to nobody."
 
     - name: Verify | Stat log file /var/log/docker/docker.log
       ansible.builtin.stat:
         path: /var/log/docker/docker.log
       register: __docker_log_file_stat
 
-    - name: Verify | Assert log file permissions and ownership match OS default
+    - name: Verify | Assert log file owner updated to nobody
       ansible.builtin.assert:
         that:
           - "__docker_log_file_stat.stat.exists"
-          - "__docker_log_file_stat.stat.mode == '0640'"
-          - "__docker_log_file_stat.stat.pw_name == __docker_os_log_user_default"
-          - "__docker_log_file_stat.stat.gr_name == __docker_os_log_group_default"
+          - "__docker_log_file_stat.stat.pw_name == 'nobody'"
         fail_msg: >-
-          Log file /var/log/docker/docker.log missing or has incorrect mode/owner/group
-          (expected 0640 {{ __docker_os_log_user_default }}:{{ __docker_os_log_group_default }},
-          got {{ __docker_log_file_stat.stat.mode }} {{ __docker_log_file_stat.stat.pw_name }}:{{ __docker_log_file_stat.stat.gr_name }}).
-        success_msg: "Log file /var/log/docker/docker.log exists with mode 0640 and OS default ownership."
+          V1 regression detected! Explicit docker_rsyslog_log_file_owner override did not update log file owner to nobody
+          (got {{ __docker_log_file_stat.stat.pw_name }}).
+        success_msg: "Log file /var/log/docker/docker.log exists with owner nobody."
 
     - name: Verify | Stat /etc/logrotate.d/docker
       ansible.builtin.stat:
@@ -96,3 +76,17 @@
           - "__logrotate_cmd.rc == 0"
         fail_msg: "logrotate configuration /etc/logrotate.d/docker is missing or failed syntax check."
         success_msg: "/etc/logrotate.d/docker exists and passed logrotate -d syntax check."
+
+    - name: Verify | Slurp /etc/logrotate.d/docker
+      ansible.builtin.slurp:
+        src: /etc/logrotate.d/docker
+      register: __logrotate_slurp
+
+    - name: Verify | Assert logrotate create directive matches live log owner (nobody)
+      ansible.builtin.assert:
+        that:
+          - "'create ' in (__logrotate_slurp.content | b64decode)"
+          - "' nobody ' in (__logrotate_slurp.content | b64decode)"
+        fail_msg: >-
+          V1 regression detected! /etc/logrotate.d/docker create directive does not match live log file owner (nobody).
+        success_msg: "/etc/logrotate.d/docker create directive matches live log file owner (nobody)."

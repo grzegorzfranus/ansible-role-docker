@@ -1,9 +1,9 @@
 # =============================================================================
-# Ansible Role: Docker - Molecule Convergence Playbook (Logging Scenario)
+# Ansible Role: Docker - Molecule Convergence Playbook (Logging Override Scenario)
 # =============================================================================
 
 ---
-- name: Converge | Install Docker with default rsyslog log owner
+- name: Converge | Install Docker with explicit rsyslog log owner override
   hosts: all
 
   pre_tasks:
@@ -24,3 +24,13 @@
     - role: ../../..
       vars:
         docker_configure_rsyslog: true
+        docker_rsyslog_log_file_owner: "nobody"
+        docker_logrotate_options:
+          frequency: "weekly"
+          count: 12
+          missingok: true
+          compress: true
+          nocreate: false
+          dateext: true
+          archive_directory_path: "{{ docker_log_directory_path }}"
+          copytruncate: false
