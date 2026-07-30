@@ -8,6 +8,19 @@
   gather_facts: true
 
   tasks:
+    - name: Prepare | Update apt cache (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 600
+      changed_when: false
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Prepare | Update dnf cache (RedHat)
+      ansible.builtin.dnf:
+        update_cache: true
+      changed_when: false
+      when: ansible_facts['os_family'] == "RedHat"
+
     - name: Prepare | Disable EPEL repository (RedHat)
       ansible.builtin.shell: |
         if [ -f /etc/yum.repos.d/epel.repo ]; then
