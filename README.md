@@ -37,7 +37,7 @@ This Ansible role installs and configures Docker Engine from official repositori
 
 ### Ansible version
 
-Ansible >= 2.16
+Ansible >= 2.15
 
 ### Python version
 
@@ -143,12 +143,14 @@ Enable dedicated logging to separate Docker logs from system logs:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `docker_state` | Control overall role behavior: `present` to install, `absent` to uninstall | `"present"` |
+| `docker_remove_data` | Opt-in flag when `docker_state: absent` to purge `/var/lib/docker` engine data | `false` |
 
 ### General Settings
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `docker_service_enabled` | Enable/disable Docker service on boot | `true` |
+| `docker_manage_service_restart` | Allow role handlers to restart Docker/rsyslog services and run `augenrules --load` (set `false` in container test environments) | `true` |
 | `docker_package_state` | Package state for Docker packages (`present` or `latest`) | `"present"` |
 | `docker_users` | List of existing users to add to `docker` group (fails if user does not exist; missing accounts are not created) | `[]` |
 
@@ -164,8 +166,13 @@ Enable dedicated logging to separate Docker logs from system logs:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `docker_enable_tcp_socket` | Enable dockerd TCP socket (no TLS; replaces ExecStart drop-in while preserving `--containerd=`) | `false` |
+| `docker_enable_tcp_socket` | Enable dockerd TCP socket (replaces ExecStart drop-in while preserving `--containerd=`) | `false` |
 | `docker_tcp_listen` | TCP listen address when enabled | `"0.0.0.0:2375"` |
+| `docker_tcp_tls_enabled` | Enable TLS authentication for TCP socket | `false` |
+| `docker_tcp_tls_cacert` | Absolute path to CA certificate for TLS verification | `""` |
+| `docker_tcp_tls_cert` | Absolute path to server certificate for TLS | `""` |
+| `docker_tcp_tls_key` | Absolute path to server private key for TLS | `""` |
+| `docker_tcp_insecure_acknowledged` | Opt-in flag required to bind non-loopback TCP socket without TLS | `false` |
 | `docker_log_driver` | Default log driver | `"json-file"` |
 | `docker_log_opts` | Log driver options (must include `max-size` and `max-file`) | `{"max-size": "10m", "max-file": "3"}` |
 | `docker_registry_mirrors` | List of registry mirrors | `[]` |

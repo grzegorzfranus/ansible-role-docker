@@ -15,9 +15,12 @@ OnCalendar=monthly
 {% else %}
 OnCalendar=daily
 {% endif %}
+{% if docker_backup_frequency == 'hourly' %}
+RandomizedDelaySec=5m
+{% else %}
 RandomizedDelaySec=1h
+{% endif %}
 Persistent=true
 
 [Install]
 WantedBy=timers.target
-

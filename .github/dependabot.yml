@@ -12,8 +12,8 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
-    # Group minor and patch updates together to reduce PR noise
     commit-message:
+      # Prefix configured to 'build' for action dependency updates
       prefix: "build"
       include: "scope"
     groups:

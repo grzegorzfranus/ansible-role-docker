@@ -69,10 +69,9 @@
   become: true
   ansible.builtin.package:
     name: >-
-      {{ [
-          'docker-ce', 'docker-ce-cli', 'containerd.io',
-          'docker-compose-plugin', 'docker-buildx-plugin'
-        ] + docker_extra_packages
+      {{ __docker_base_packages
+        + ['docker-compose-plugin', 'docker-buildx-plugin']
+        + docker_extra_packages
       }}
     state: absent
 

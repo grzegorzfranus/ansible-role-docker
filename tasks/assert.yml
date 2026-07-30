@@ -30,7 +30,11 @@
       - docker_package_state is string
       - docker_package_state in ['present', 'latest']
       - docker_users is sequence
-    fail_msg: "General settings variables are invalid"
+    fail_msg: >-
+      Invalid general settings: docker_service_enabled={{ docker_service_enabled }},
+      docker_manage_service_restart={{ docker_manage_service_restart }},
+      docker_package_state={{ docker_package_state }},
+      docker_users={{ docker_users }}
     success_msg: "General settings are valid"
 
 - name: Docker | assert | Validate docker_users entries
@@ -50,7 +54,11 @@
       - docker_install_compose_plugin is boolean
       - docker_install_buildx_plugin is boolean
       - docker_extra_packages is sequence
-    fail_msg: "Package plugin flags or extra packages list is invalid"
+    fail_msg: >-
+      Invalid package plugin flags or extra packages:
+      docker_install_compose_plugin={{ docker_install_compose_plugin }},
+      docker_install_buildx_plugin={{ docker_install_buildx_plugin }},
+      docker_extra_packages={{ docker_extra_packages }}
     success_msg: "Package plugin settings are valid"
 
 # -----------------------------------------------------------------------------
@@ -84,13 +92,31 @@
     that:
       - >-
         not (docker_enable_tcp_socket | bool) or
-        (docker_tcp_listen is match('^(127\.0\.0\.1|localhost):[0-9]+$')) or
+        (docker_tcp_listen is match('^(127\.0\.0\.1|localhost|\[::1\]):[0-9]+$')) or
         (docker_tcp_tls_enabled | bool) or
         (docker_tcp_insecure_acknowledged | bool)
     fail_msg: >-
       Binding TCP socket to non-loopback address '{{ docker_tcp_listen }}' without TLS is insecure.
       Set docker_tcp_tls_enabled: true or set docker_tcp_insecure_acknowledged: true to proceed.
     success_msg: "TCP socket security configuration is valid"
+
+- name: Docker | assert | Validate TCP socket TLS certificate paths
+  ansible.builtin.assert:
+    that:
+      - >-
+        not (docker_enable_tcp_socket | bool and docker_tcp_tls_enabled | bool) or
+        (docker_tcp_tls_cacert is string and docker_tcp_tls_cacert is match('^/'))
+      - >-
+        not (docker_enable_tcp_socket | bool and docker_tcp_tls_enabled | bool) or
+        (docker_tcp_tls_cert is string and docker_tcp_tls_cert is match('^/'))
+      - >-
+        not (docker_enable_tcp_socket | bool and docker_tcp_tls_enabled | bool) or
+        (docker_tcp_tls_key is string and docker_tcp_tls_key is match('^/'))
+    fail_msg: >-
+      When docker_tcp_tls_enabled is true, docker_tcp_tls_cacert ('{{ docker_tcp_tls_cacert }}'),
+      docker_tcp_tls_cert ('{{ docker_tcp_tls_cert }}'), and docker_tcp_tls_key ('{{ docker_tcp_tls_key }}')
+      must be non-empty absolute paths starting with '/'.
+    success_msg: "TCP socket TLS certificate paths are valid"
 
 - name: Docker | assert | Validate registry mirrors URLs
   ansible.builtin.assert:
@@ -266,7 +292,13 @@
       - docker_include_network_info is boolean
       - docker_include_package_info is boolean
       - (docker_error_log_lines | int) >= 0
-    fail_msg: "Error reporting flags must be boolean and log lines >= 0"
+    fail_msg: >-
+      Invalid error reporting configuration:
+      docker_enhanced_error_reporting={{ docker_enhanced_error_reporting }},
+      docker_include_hardware_info={{ docker_include_hardware_info }},
+      docker_include_network_info={{ docker_include_network_info }},
+      docker_include_package_info={{ docker_include_package_info }},
+      docker_error_log_lines={{ docker_error_log_lines }}
     success_msg: "Error reporting flags are valid"
 
 - name: Docker | assert | Report validation results
