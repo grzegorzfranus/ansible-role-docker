@@ -25,6 +25,8 @@
       vars:
         docker_configure_rsyslog: true
         docker_rsyslog_log_file_owner: "nobody"
+        # Disable service restarts and augenrules execution in container test environment
+        docker_manage_service_restart: false
         docker_logrotate_options:
           frequency: "weekly"
           count: 12

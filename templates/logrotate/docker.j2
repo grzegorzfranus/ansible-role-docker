@@ -51,7 +51,7 @@
   dateformat .%Y-%m-%d
   {% endif %}
   # Archive log directory path
-  olddir {{ docker_logrotate_options.archive_directory_path | default(docker_log_directory_path) }}
+  olddir {{ docker_logrotate_options.archive_directory_path | default(docker_log_directory_path, true) }}
   # Run scripts only once for multiple files
   sharedscripts
 }

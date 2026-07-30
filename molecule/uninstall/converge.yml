@@ -27,6 +27,8 @@
         docker_prune_enabled: true
         docker_backup_enabled: true
         docker_audit_socket: true
+        # Disable service restarts and augenrules execution in container test environment
+        docker_manage_service_restart: false
 
 - name: "Converge | Remove Docker (docker_state: absent)"
   hosts: all

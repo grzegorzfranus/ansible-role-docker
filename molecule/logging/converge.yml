@@ -24,3 +24,5 @@
     - role: ../../..
       vars:
         docker_configure_rsyslog: true
+        # Disable service restarts and augenrules execution in container test environment
+        docker_manage_service_restart: false

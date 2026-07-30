@@ -1,9 +1,14 @@
 ---
-# Docker Remove — Clean uninstall of Docker and all configuration.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Role Removal and Cleanup
+# =============================================================================
+# Stops services, removes packages, configuration files, systemd drop-ins, and
+# optionally purges data directory /var/lib/docker when docker_remove_data is true.
+# =============================================================================
 
 - name: Docker | remove | Stop and disable service (systemd)
   become: true
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: "{{ __docker_service_name }}"
     state: stopped
     enabled: false
@@ -14,7 +19,7 @@
 
 - name: Docker | remove | Stop and disable prune timer
   become: true
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: docker-prune.timer
     state: stopped
     enabled: false
@@ -24,7 +29,7 @@
 
 - name: Docker | remove | Stop and disable backup timer
   become: true
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: docker-backup.timer
     state: stopped
     enabled: false
@@ -63,12 +68,11 @@
 - name: Docker | remove | Remove Docker packages
   become: true
   ansible.builtin.package:
-    name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-compose-plugin
-      - docker-buildx-plugin
+    name: >-
+      {{ __docker_base_packages
+        + ['docker-compose-plugin', 'docker-buildx-plugin']
+        + docker_extra_packages
+      }}
     state: absent
 
 - name: Docker | remove | Remove rsyslog configuration
@@ -81,6 +85,18 @@
   become: true
   ansible.builtin.file:
     path: "/etc/logrotate.d/docker"
+    state: absent
+
+- name: Docker | remove | Remove /etc/docker configuration directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/docker
+    state: absent
+
+- name: Docker | remove | Remove docker group
+  become: true
+  ansible.builtin.group:
+    name: docker
     state: absent
 
 - name: Docker | remove | Remove systemd service override
@@ -131,7 +147,7 @@
 
 - name: Docker | remove | Reload systemd if needed
   become: true
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     daemon_reload: true
   when:
     - ansible_facts['service_mgr'] == 'systemd'
@@ -151,3 +167,11 @@
     - >-
       __docker_log_dir_normalized not in
       ['', '/', '/var', '/var/log', '/etc', '/usr']
+
+- name: Docker | remove | Optionally remove Docker data directory (/var/lib/docker)
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/docker
+    state: absent
+  when:
+    - docker_remove_data | bool

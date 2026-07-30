@@ -1,5 +1,10 @@
 ---
-# Docker Install — Install Docker packages and verify binaries.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Package Installation
+# =============================================================================
+# Installs Docker Engine packages, compose/buildx plugins, and adds configured
+# users to the docker group.
+# =============================================================================
 
 - name: Docker | install | Check if Docker is already installed
   ansible.builtin.command: "docker --version"
@@ -17,9 +22,7 @@
   become: true
   ansible.builtin.apt:
     name: >-
-      {{ [
-          'docker-ce', 'docker-ce-cli', 'containerd.io'
-        ]
+      {{ __docker_base_packages
         + (['docker-compose-plugin'] if docker_install_compose_plugin | bool else [])
         + (['docker-buildx-plugin'] if docker_install_buildx_plugin | bool else [])
         + docker_extra_packages
@@ -37,9 +40,7 @@
   become: true
   ansible.builtin.dnf:
     name: >-
-      {{ [
-          'docker-ce', 'docker-ce-cli', 'containerd.io'
-        ]
+      {{ __docker_base_packages
         + (['docker-compose-plugin'] if docker_install_compose_plugin | bool else [])
         + (['docker-buildx-plugin'] if docker_install_buildx_plugin | bool else [])
         + docker_extra_packages

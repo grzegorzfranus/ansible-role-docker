@@ -1,5 +1,9 @@
 ---
-# Docker Error Reporting — Comprehensive diagnostic collection for troubleshooting.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Error Reporting
+# =============================================================================
+# Collects system, network, package manager, and log diagnostics upon failure.
+# =============================================================================
 
 - name: Docker | error | Collect current error context
   ansible.builtin.set_fact:
@@ -91,7 +95,7 @@
     - docker_include_network_info | bool
 
 - name: Docker | error | Check Docker service status
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: "{{ __docker_service_name }}"
   register: __docker_service_error_status
   failed_when: false

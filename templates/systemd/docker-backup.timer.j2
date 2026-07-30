@@ -1,10 +1,25 @@
 #jinja2: trim_blocks: True, lstrip_blocks: True
 {{ ansible_managed | comment }}
 [Unit]
-Description=Run Docker backup daily
+Description=Run Docker backup periodically
 
 [Timer]
+{% if docker_backup_frequency == 'hourly' %}
+OnCalendar=hourly
+{% elif docker_backup_frequency == 'daily' %}
 OnCalendar=daily
+{% elif docker_backup_frequency == 'weekly' %}
+OnCalendar=weekly
+{% elif docker_backup_frequency == 'monthly' %}
+OnCalendar=monthly
+{% else %}
+OnCalendar=daily
+{% endif %}
+{% if docker_backup_frequency == 'hourly' %}
+RandomizedDelaySec=5m
+{% else %}
+RandomizedDelaySec=1h
+{% endif %}
 Persistent=true
 
 [Install]

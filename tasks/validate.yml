@@ -1,5 +1,10 @@
 ---
-# Docker Validate — System validation, smart detection, and connectivity checks.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Pre-execution Validation
+# =============================================================================
+# Performs system architecture, OS distribution, package manager, and network
+# connectivity verification before executing changes.
+# =============================================================================
 
 - name: Docker | validate | Check system architecture support
   ansible.builtin.assert:

@@ -1,13 +1,22 @@
 ---
-# Docker Configure — Daemon configuration, systemd drop-ins, and optional networks.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Daemon and Service Drop-in Configuration
+# =============================================================================
+# Configures /etc/docker/daemon.json using Ansible dict rendering, systemd
+# drop-in overrides for TCP socket/proxies, and socket group permissions.
+# =============================================================================
 
 - name: Docker | configure | Ensure /etc/docker exists
   become: true
   ansible.builtin.file:
     path: /etc/docker
     state: directory
+    owner: root
+    group: root
     mode: '0755'
 
+# Note: {{ ansible_managed }} comment block is omitted from daemon.json.j2
+# because JSON standard does not support comment syntax.
 - name: Docker | configure | Render daemon.json
   become: true
   ansible.builtin.template:
@@ -16,6 +25,43 @@
     owner: root
     group: root
     mode: '0644'
+    backup: true
+  vars:
+    __docker_daemon_base:
+      log-driver: "{{ docker_log_driver }}"
+      log-opts: "{{ docker_log_opts }}"
+    __docker_daemon_hosts: >-
+      {{
+        {
+          'hosts': [
+            'unix:///var/run/docker.sock',
+            'tcp://' ~ docker_tcp_listen
+          ]
+        } if (docker_enable_tcp_socket | bool) else {}
+      }}
+    __docker_daemon_mirrors: >-
+      {{
+        {'registry-mirrors': docker_registry_mirrors}
+        if (docker_registry_mirrors | length > 0) else {}
+      }}
+    __docker_daemon_tls: >-
+      {{
+        {
+          'tls': true,
+          'tlsverify': true,
+          'tlscacert': docker_tcp_tls_cacert,
+          'tlscert': docker_tcp_tls_cert,
+          'tlskey': docker_tcp_tls_key
+        } if (docker_enable_tcp_socket | bool and docker_tcp_tls_enabled | bool) else {}
+      }}
+    __docker_daemon_config: >-
+      {{
+        __docker_daemon_base
+        | combine(__docker_daemon_hosts)
+        | combine(__docker_daemon_mirrors)
+        | combine(__docker_daemon_tls)
+        | combine(docker_daemon_extra, recursive=True)
+      }}
   notify:
     - Docker | handlers | Restart docker service
 
@@ -24,6 +70,8 @@
   ansible.builtin.file:
     path: /etc/systemd/system/docker.service.d
     state: directory
+    owner: root
+    group: root
     mode: '0755'
   when:
     - (docker_enable_tcp_socket | bool) or
@@ -39,6 +87,7 @@
     owner: root
     group: root
     mode: '0644'
+    backup: true
   when:
     - docker_enable_tcp_socket | bool
   notify:
@@ -64,6 +113,7 @@
     owner: root
     group: root
     mode: '0644'
+    backup: true
   when:
     - (docker_http_proxy | length > 0) or
       (docker_https_proxy | length > 0) or
@@ -77,6 +127,8 @@
   ansible.builtin.file:
     path: /etc/systemd/system/docker.socket.d
     state: directory
+    owner: root
+    group: root
     mode: '0755'
 
 - name: Docker | configure | Enforce docker.sock group/mode via systemd override
@@ -87,6 +139,7 @@
     owner: root
     group: root
     mode: '0644'
+    backup: true
   notify:
     - Docker | handlers | Reload systemd
     - Docker | handlers | Restart docker service

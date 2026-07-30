@@ -37,7 +37,7 @@ This Ansible role installs and configures Docker Engine from official repositori
 
 ### Ansible version
 
-Ansible >= 2.16
+Ansible >= 2.15
 
 ### Python version
 
@@ -143,12 +143,14 @@ Enable dedicated logging to separate Docker logs from system logs:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `docker_state` | Control overall role behavior: `present` to install, `absent` to uninstall | `"present"` |
+| `docker_remove_data` | Opt-in flag when `docker_state: absent` to purge `/var/lib/docker` engine data | `false` |
 
 ### General Settings
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `docker_service_enabled` | Enable/disable Docker service on boot | `true` |
+| `docker_manage_service_restart` | Allow role handlers to restart Docker/rsyslog services and run `augenrules --load` (set `false` in container test environments) | `true` |
 | `docker_package_state` | Package state for Docker packages (`present` or `latest`) | `"present"` |
 | `docker_users` | List of existing users to add to `docker` group (fails if user does not exist; missing accounts are not created) | `[]` |
 
@@ -164,8 +166,13 @@ Enable dedicated logging to separate Docker logs from system logs:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `docker_enable_tcp_socket` | Enable dockerd TCP socket (no TLS; replaces ExecStart drop-in while preserving `--containerd=`) | `false` |
+| `docker_enable_tcp_socket` | Enable dockerd TCP socket (replaces ExecStart drop-in while preserving `--containerd=`) | `false` |
 | `docker_tcp_listen` | TCP listen address when enabled | `"0.0.0.0:2375"` |
+| `docker_tcp_tls_enabled` | Enable TLS authentication for TCP socket | `false` |
+| `docker_tcp_tls_cacert` | Absolute path to CA certificate for TLS verification | `""` |
+| `docker_tcp_tls_cert` | Absolute path to server certificate for TLS | `""` |
+| `docker_tcp_tls_key` | Absolute path to server private key for TLS | `""` |
+| `docker_tcp_insecure_acknowledged` | Opt-in flag required to bind non-loopback TCP socket without TLS | `false` |
 | `docker_log_driver` | Default log driver | `"json-file"` |
 | `docker_log_opts` | Log driver options (must include `max-size` and `max-file`) | `{"max-size": "10m", "max-file": "3"}` |
 | `docker_registry_mirrors` | List of registry mirrors | `[]` |
@@ -214,13 +221,16 @@ creation settings.
 |----------|-------------|---------|
 | `docker_prune_enabled` | Enable systemd prune timer | `false` |
 | `docker_prune_frequency` | Prune cadence (`daily`, `weekly`, `monthly`) | `"weekly"` |
-| `docker_prune_flags` | Prune flags | `"--all --volumes --force"` |
+| `docker_prune_flags` | Prune flags (dangling resources only by default) | `"--force"` |
+
+> ⚠️ **Note:** To enable aggressive pruning of all unused images and volumes, set `docker_prune_flags: "--all --volumes --force"`. Use with caution as this permanently deletes unreferenced volumes and stopped containers.
 
 ### Backup Timer
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `docker_backup_enabled` | Enable systemd backup timer | `false` |
+| `docker_backup_frequency` | Backup cadence (`hourly`, `daily`, `weekly`, `monthly`) | `"daily"` |
 | `docker_backup_path` | Backup destination directory | `"/var/backups/docker"` |
 | `docker_backup_retention` | Number of retained backups | `7` |
 | `docker_backup_include_volumes_metadata` | Include volumes list and metadata | `false` |
@@ -242,7 +252,7 @@ creation settings.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `docker_audit_socket` | Add auditd rule for `/var/run/docker.sock` if auditd present | `false` |
+| `docker_audit_socket` | Add auditd rule for `/run/docker.sock` if auditd present | `false` |
 
 ### System Validation Settings
 
@@ -302,9 +312,9 @@ docker info
 - ✅ **GPG-verified Repositories**: Official Docker repositories with signed-by keyring
 - ✅ **Socket Permissions**: Docker socket enforced to group `docker`, mode `0660`
 - ✅ **Systemd Overrides**: ExecStart drop-in rendered only when `docker_enable_tcp_socket: true` to prevent flag conflicts (preserves `--containerd=`)
-- ✅ **Audit Support**: Optional auditd rule for docker.sock monitoring
+- ✅ **Audit Support**: Optional auditd rule for `/run/docker.sock` monitoring
 - ✅ **Proxy Support**: Configurable HTTP/HTTPS proxy via systemd drop-ins
-- ✅ **Minimal Attack Surface**: TCP socket disabled by default
+- ✅ **Minimal Attack Surface**: TCP socket disabled by default; non-loopback binds require TLS or explicit opt-in acknowledgement
 
 ### Uninstall
 
@@ -323,17 +333,17 @@ To remove Docker and its configuration from a host:
 ## 🏷️ Tags
 
 - `always` - Tasks that always run (variable loading and validation)
-- `setup` - Setup and configuration tasks
-- `init` - Initial environment setup and variable loading
-- `validate` - Variable validation and system checks
-- `requirements` - Prerequisite and repository configuration tasks
-- `install` - Package installation tasks
-- `configure` - Service and daemon configuration tasks
-- `service` - Service management tasks
-- `logging` - rsyslog and logrotate configuration
-- `prune` - Prune timer tasks
-- `backup` - Backup timer tasks
-- `audit` - Audit configuration tasks
+- `docker_setup` - Setup and configuration tasks
+- `docker_init` - Initial environment setup and variable loading
+- `docker_validate` - Variable validation and system checks
+- `docker_requirements` - Prerequisite and repository configuration tasks
+- `docker_install` - Package installation tasks
+- `docker_configure` - Service and daemon configuration tasks
+- `docker_service` - Service management tasks
+- `docker_logging` - rsyslog and logrotate configuration
+- `docker_prune` - Prune timer tasks
+- `docker_backup` - Backup timer tasks
+- `docker_audit` - Audit configuration tasks
 
 ## 🔧 Troubleshooting
 

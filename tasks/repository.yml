@@ -1,11 +1,17 @@
 ---
-# Docker Repository — Configure official Docker repositories with GPG verification.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Package Repositories
+# =============================================================================
+# Configures official Docker GPG keys and package repositories for Debian/EL.
+# =============================================================================
 
 - name: Docker | repository | Create apt keyrings directory
   become: true
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
+    owner: root
+    group: root
     mode: '0755'
   when:
     - ansible_facts['os_family'] == 'Debian'
@@ -15,7 +21,13 @@
   ansible.builtin.get_url:
     url: "https://download.docker.com/linux/{{ 'ubuntu' if ansible_facts.distribution | lower == 'ubuntu' else 'debian' }}/gpg"
     dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
     mode: '0644'
+  register: __docker_gpg_download_result
+  until: __docker_gpg_download_result is succeeded
+  retries: 3
+  delay: 5
   when:
     - ansible_facts['os_family'] == 'Debian'
 

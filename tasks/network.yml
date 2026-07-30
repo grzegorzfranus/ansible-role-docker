@@ -1,5 +1,9 @@
 ---
-# Docker Network — Create user-defined Docker networks.
+# =============================================================================
+# Ansible Role: Docker - Tasks: User-defined Networks
+# =============================================================================
+# Creates user-defined Docker networks using community.docker module or CLI fallback.
+# =============================================================================
 
 - name: Docker | network | Create user-defined networks via module
   community.docker.docker_network:

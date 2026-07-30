@@ -1,5 +1,10 @@
 ---
-# Docker Prerequisites — Install required packages before Docker setup.
+# =============================================================================
+# Ansible Role: Docker - Tasks: System Prerequisites
+# =============================================================================
+# Installs required base packages (ca-certificates, curl, dnf-plugins-core) and
+# checks filesystem mount structure for /var/lib/docker.
+# =============================================================================
 
 - name: Docker | prerequisites | Ensure base packages present (Debian/Ubuntu)
   become: true

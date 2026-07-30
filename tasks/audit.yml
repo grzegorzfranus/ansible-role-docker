@@ -1,5 +1,9 @@
 ---
-# Docker Audit — Configure auditd rule for docker.sock monitoring.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Audit Rule Configuration
+# =============================================================================
+# Configures auditd watch rule for /run/docker.sock socket access.
+# =============================================================================
 
 - name: Docker | audit | Check if auditctl exists
   become: true
@@ -7,14 +11,22 @@
     path: /sbin/auditctl
   register: __docker_auditctl
 
-- name: Docker | audit | Configure audit rule for /var/run/docker.sock
+- name: Docker | audit | Warn if auditctl is not available
+  ansible.builtin.debug:
+    msg: "auditctl not found at /sbin/auditctl; skipping Docker socket audit rule configuration."
+  when:
+    - not __docker_auditctl.stat.exists
+
+- name: Docker | audit | Configure audit rule for /run/docker.sock
   become: true
   ansible.builtin.lineinfile:
     path: /etc/audit/rules.d/docker.rules
     state: present
     create: true
-    line: "-w /var/run/docker.sock -p wa -k docker-sock"
+    line: "-w /run/docker.sock -p wa -k docker-sock"
     mode: '0644'
+    owner: root
+    group: root
   when:
     - __docker_auditctl.stat.exists
   notify: Docker | handlers | Restart auditd
