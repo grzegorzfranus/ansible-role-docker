@@ -98,6 +98,7 @@
       - >-
         (docker_log_directory_path | length == 0) or
         (docker_log_directory_path is match('^/[^/]+/.+') and
+         docker_log_directory_path is not match('.*/\..*') and
          __docker_log_dir_norm not in ['/', '/var', '/var/log', '/etc', '/usr'])
       - docker_rsyslog_conf_name is string
       - docker_rsyslog_imjournal_filecreatemode is string

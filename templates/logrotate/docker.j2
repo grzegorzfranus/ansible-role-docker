@@ -36,6 +36,7 @@
   # This ensures dockerd continues logging without interruption
   copytruncate
   {% else %}
+  {% if docker_logrotate_create.enabled | default(true) %}
   {% set _c_owner = docker_logrotate_create.owner | default('', true) %}
   {% set _c_group = docker_logrotate_create.group | default('', true) %}
   {% set _owner = _c_owner if _c_owner | length > 0 else __docker_log_file_owner %}

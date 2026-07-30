@@ -150,7 +150,7 @@ Enable dedicated logging to separate Docker logs from system logs:
 |----------|-------------|---------|
 | `docker_service_enabled` | Enable/disable Docker service on boot | `true` |
 | `docker_package_state` | Package state for Docker packages (`present` or `latest`) | `"present"` |
-| `docker_users` | List of users to add to `docker` group | `[]` |
+| `docker_users` | List of existing users to add to `docker` group (fails if user does not exist; missing accounts are not created) | `[]` |
 
 ### Packages and Plugins
 
@@ -164,7 +164,7 @@ Enable dedicated logging to separate Docker logs from system logs:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `docker_enable_tcp_socket` | Enable dockerd TCP socket (no TLS) | `false` |
+| `docker_enable_tcp_socket` | Enable dockerd TCP socket (no TLS; replaces ExecStart drop-in while preserving `--containerd=`) | `false` |
 | `docker_tcp_listen` | TCP listen address when enabled | `"0.0.0.0:2375"` |
 | `docker_log_driver` | Default log driver | `"json-file"` |
 | `docker_log_opts` | Log driver options (must include `max-size` and `max-file`) | `{"max-size": "10m", "max-file": "3"}` |
@@ -184,7 +184,7 @@ Enable dedicated logging to separate Docker logs from system logs:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `docker_configure_rsyslog` | Configure rsyslog to write dockerd logs to file | `false` |
-| `docker_log_directory_path` | Log directory path | `"/var/log/docker"` |
+| `docker_log_directory_path` | Log directory path (multi-component absolute path; cannot resolve to `/`, `/var`, `/var/log`, `/etc`, or `/usr`) | `"/var/log/docker"` |
 | `docker_rsyslog_conf_name` | Name of rsyslog config file in `/etc/rsyslog.d/` | `"99-docker.conf"` |
 | `docker_rsyslog_imjournal_filecreatemode` | imjournal file creation mode | `"0644"` |
 | `docker_rsyslog_log_file_owner` | Owner of the docker log file (empty string falls back to OS default) | `""` |
@@ -203,7 +203,10 @@ Enable dedicated logging to separate Docker logs from system logs:
 | `docker_logrotate_create.owner` | New file owner (when creating, resolves OS default or override) | `""` |
 | `docker_logrotate_create.group` | New file group (when creating, resolves OS default or override) | `""` |
 
-Note: If `docker_rsyslog_log_file_owner` or `docker_rsyslog_log_file_group` are left empty (the default), the role falls back to OS distribution defaults: `syslog:adm` on Ubuntu, `root:adm` on Debian, and `root:root` on EL9. Setting explicit non-empty values overrides the OS default for both live log files and logrotate creation settings.
+Note: If `docker_rsyslog_log_file_owner` or `docker_rsyslog_log_file_group` are left empty (the default),
+the role falls back to OS distribution defaults: `syslog:adm` on Ubuntu, `root:adm` on Debian, and `root:root`
+on EL9. Setting explicit non-empty values overrides the OS default for both live log files and logrotate
+creation settings.
 
 ### Prune Timer
 
@@ -298,7 +301,7 @@ docker info
 
 - ✅ **GPG-verified Repositories**: Official Docker repositories with signed-by keyring
 - ✅ **Socket Permissions**: Docker socket enforced to group `docker`, mode `0660`
-- ✅ **Systemd Overrides**: ExecStart override prevents flag conflicts
+- ✅ **Systemd Overrides**: ExecStart drop-in rendered only when `docker_enable_tcp_socket: true` to prevent flag conflicts (preserves `--containerd=`)
 - ✅ **Audit Support**: Optional auditd rule for docker.sock monitoring
 - ✅ **Proxy Support**: Configurable HTTP/HTTPS proxy via systemd drop-ins
 - ✅ **Minimal Attack Surface**: TCP socket disabled by default
