@@ -30,7 +30,6 @@ __docker_os_log_user_default: "root"
 __docker_os_log_group_default: "root"
 __docker_log_file_owner: "{{ docker_rsyslog_log_file_owner | default(__docker_os_log_user_default, true) }}"
 __docker_log_file_group: "{{ docker_rsyslog_log_file_group | default(__docker_os_log_group_default, true) }}"
-__docker_os_syslog_path: "/var/log/syslog"
 
 # Supported architectures
 __docker_supported_architectures:
