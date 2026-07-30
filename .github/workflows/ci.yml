@@ -134,6 +134,7 @@ jobs:
     uses: grzegorzfranus/github-workflows/.github/workflows/ansible-ci.yml@v3.0.1
     with:
       molecule-distros: '["ubuntu2404", "ubuntu2204", "debian12", "debian11", "rockylinux9"]'
+      molecule-scenarios: '["default", "logging", "logging-override", "uninstall"]'
 
   merge-check:
     name: "Merge Check Gate"

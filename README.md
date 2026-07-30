@@ -391,11 +391,26 @@ ansible-role-docker/
 │   ├── main.yml             # Role metadata and Galaxy information
 │   └── argument_specs.yml   # Ansible-native argument validation
 ├── molecule/                 # Molecule testing framework
-│   └── default/
+│   ├── default/              # Default installation and verification scenario
+│   │   ├── molecule.yml     # Test configuration
+│   │   ├── converge.yml     # Role execution playbook
+│   │   ├── prepare.yml      # Test preparation tasks
+│   │   └── verify.yml       # Verification tests with strict assertions
+│   ├── logging/              # Rsyslog and logrotate default configuration scenario
+│   │   ├── molecule.yml     # Test configuration
+│   │   ├── converge.yml     # Single-play convergence playbook (default logging)
+│   │   ├── prepare.yml      # Test preparation tasks (logrotate package)
+│   │   └── verify.yml       # Verification tests for rsyslog, logrotate, and OS default log owner
+│   ├── logging-override/     # Rsyslog owner override and copytruncate: false scenario
+│   │   ├── molecule.yml     # Test configuration
+│   │   ├── converge.yml     # Single-play convergence playbook (owner override)
+│   │   ├── prepare.yml      # Test preparation tasks (logrotate package)
+│   │   └── verify.yml       # Verification tests for owner override and logrotate create directive consistency
+│   └── uninstall/            # Complete role uninstall scenario
 │       ├── molecule.yml     # Test configuration
-│       ├── converge.yml     # Role execution playbook
+│       ├── converge.yml     # Multi-play convergence playbook (install, uninstall, guard check)
 │       ├── prepare.yml      # Test preparation tasks
-│       └── verify.yml       # Verification tests
+│       └── verify.yml       # Verification tests asserting absence of packages/units and protection of /var/log
 ├── tasks/
 │   ├── main.yml             # Main task orchestration
 │   ├── assert.yml           # Variable validation
@@ -471,7 +486,7 @@ Runs on every Pull Request in a two-tier gate pattern:
 4. **Ansible Lint** — checks Ansible best practices and role standards
 5. **Galaxy Metadata Validation** — verifies `meta/main.yml` schema and requirements (`ansible-meta-validate.yml`)
 6. **Security Scanning** — TruffleHog secret detection and Trivy IaC scanning (`ansible-security.yml`)
-7. **Molecule Integration Tests** — executes Molecule test matrix across Ubuntu 24.04/22.04, Debian 12/11, and Rocky Linux 9 (`ansible-molecule.yml`)
+7. **Molecule Integration Tests** — executes Molecule test matrix across Ubuntu 24.04/22.04, Debian 12/11, and Rocky Linux 9 (`ansible-molecule.yml`). Four distinct scenarios are executed: `default` (core installation, service, socket, and daemon configuration), `logging` (rsyslog, logrotate, and OS default log owner fallback), `logging-override` (rsyslog log owner override, `copytruncate: false`, and `create` directive consistency), and `uninstall` (clean removal of packages, units, and configuration while preserving system logs).
 8. **Merge Check Gate** — single authoritative status check aggregating all results for branch protection
 
 ### Release & Publish Pipeline (`ansible-publish.yml@v3.0.1`)

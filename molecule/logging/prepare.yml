@@ -1,0 +1,42 @@
+# =============================================================================
+# Ansible Role: Docker - Molecule Preparation Playbook (Logging Scenario)
+# =============================================================================
+
+---
+- name: Prepare
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Prepare | Update apt cache (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 600
+      changed_when: false
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Prepare | Update dnf cache (RedHat)
+      ansible.builtin.dnf:
+        update_cache: true
+      changed_when: false
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Prepare | Disable EPEL repository (RedHat)
+      ansible.builtin.shell: |
+        if [ -f /etc/yum.repos.d/epel.repo ]; then
+          sed -i 's/enabled=1/enabled=0/g' /etc/yum.repos.d/epel*.repo || true
+        fi
+      failed_when: false
+      changed_when: false
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Prepare | Fix /etc/shadow permissions
+      ansible.builtin.file:
+        path: /etc/shadow
+        mode: "0400"
+      failed_when: false
+
+    - name: Prepare | Ensure logrotate package installed for syntax validation
+      ansible.builtin.package:
+        name: logrotate
+        state: present

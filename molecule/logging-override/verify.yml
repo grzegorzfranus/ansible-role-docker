@@ -1,0 +1,96 @@
+# =============================================================================
+# Ansible Role: Docker - Molecule Verification Playbook (Logging Override Scenario)
+# =============================================================================
+
+---
+- name: "molecule | Verify Logging Override Scenario"
+  hosts: all
+  gather_facts: true
+
+  vars_files:
+    - "../../defaults/main.yml"
+    - "../../vars/main.yml"
+
+  tasks:
+    - name: Verify | Gather OS specific variables
+      ansible.builtin.include_vars:
+        file: "{{ lookup('ansible.builtin.first_found', params) }}"
+      vars:
+        params:
+          files:
+            - "{{ ansible_facts['distribution'] | lower }}_{{ ansible_facts['distribution_version'] | lower }}.yml"
+            - "{{ ansible_facts['distribution'] | lower }}_{{ ansible_facts['distribution_major_version'] | lower }}.yml"
+            - "{{ ansible_facts['distribution'] | lower }}.yml"
+            - "{{ ansible_facts['os_family'] | lower }}_{{ ansible_facts['distribution_version'] | lower }}.yml"
+            - "{{ ansible_facts['os_family'] | lower }}_{{ ansible_facts['distribution_major_version'].split('.')[0] }}.yml"
+            - "{{ ansible_facts['os_family'] | lower }}.yml"
+            - "main.yml"
+          paths:
+            - "../../vars"
+
+    - name: Verify | Stat log directory /var/log/docker
+      ansible.builtin.stat:
+        path: /var/log/docker
+      register: __docker_log_dir_stat
+
+    - name: Verify | Assert V1 regression guard (log directory owner updated to nobody)
+      ansible.builtin.assert:
+        that:
+          - "__docker_log_dir_stat.stat.exists"
+          - "__docker_log_dir_stat.stat.pw_name == 'nobody'"
+        fail_msg: >-
+          V1 regression detected! Explicit docker_rsyslog_log_file_owner override did not update directory owner to nobody
+          (got {{ __docker_log_dir_stat.stat.pw_name }}).
+        success_msg: "V1 regression guard passed: explicit owner override changed directory ownership to nobody."
+
+    - name: Verify | Stat log file /var/log/docker/docker.log
+      ansible.builtin.stat:
+        path: /var/log/docker/docker.log
+      register: __docker_log_file_stat
+
+    - name: Verify | Assert log file owner updated to nobody
+      ansible.builtin.assert:
+        that:
+          - "__docker_log_file_stat.stat.exists"
+          - "__docker_log_file_stat.stat.pw_name == 'nobody'"
+        fail_msg: >-
+          V1 regression detected! Explicit docker_rsyslog_log_file_owner override did not update log file owner to nobody
+          (got {{ __docker_log_file_stat.stat.pw_name }}).
+        success_msg: "Log file /var/log/docker/docker.log exists with owner nobody."
+
+    - name: Verify | Stat /etc/logrotate.d/docker
+      ansible.builtin.stat:
+        path: /etc/logrotate.d/docker
+      register: __logrotate_conf_stat
+
+    - name: Verify | Test logrotate configuration syntax
+      ansible.builtin.command: logrotate -d /etc/logrotate.d/docker
+      register: __logrotate_cmd
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | Assert logrotate configuration valid
+      ansible.builtin.assert:
+        that:
+          - "__logrotate_conf_stat.stat.exists"
+          - "__logrotate_cmd.rc == 0"
+        fail_msg: "logrotate configuration /etc/logrotate.d/docker is missing or failed syntax check."
+        success_msg: "/etc/logrotate.d/docker exists and passed logrotate -d syntax check."
+
+    - name: Verify | Slurp /etc/logrotate.d/docker
+      ansible.builtin.slurp:
+        src: /etc/logrotate.d/docker
+      register: __logrotate_slurp
+
+    - name: Verify | Assert logrotate create directive matches live log file ownership
+      ansible.builtin.assert:
+        that:
+          - >-
+            (__logrotate_slurp.content | b64decode)
+            is search('create\s+0640\s+' ~ __docker_log_file_stat.stat.pw_name ~ '\s+' ~ __docker_log_file_stat.stat.gr_name)
+        fail_msg: >-
+          V1 regression detected! logrotate create directive does not match live log file ownership
+          (expected create 0640 {{ __docker_log_file_stat.stat.pw_name }} {{ __docker_log_file_stat.stat.gr_name }}).
+        success_msg: >-
+          logrotate create directive matches live log file ownership
+          ({{ __docker_log_file_stat.stat.pw_name }}:{{ __docker_log_file_stat.stat.gr_name }}).
