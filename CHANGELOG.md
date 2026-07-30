@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.2.6...v1.3.0) (2026-07-30)
+
+
+### Features
+
+* remove no-op variables and unreachable diagnostic scaffolding ([#27](https://github.com/grzegorzfranus/ansible-role-docker/issues/27)) ([32e423e](https://github.com/grzegorzfranus/ansible-role-docker/commit/32e423e5ba4997888017c43883e53760b26c3d40))
+
 ## [1.2.6](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.2.5...v1.2.6) (2026-07-30)
 
 
