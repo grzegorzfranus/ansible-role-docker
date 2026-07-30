@@ -37,10 +37,3 @@
     verbosity: 1
   when:
     - docker_collect_system_info | bool
-
-- name: Docker | service | Handle service configuration errors
-  ansible.builtin.include_tasks: error_reporting.yml
-  when:
-    - docker_enhanced_error_reporting | bool
-    - __docker_service_status is defined
-    - __docker_service_status.failed | default(false)

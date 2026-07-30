@@ -43,6 +43,10 @@ Ansible >= 2.15
 
 Python >= 3.9
 
+### Collections
+
+- `community.docker` >= 3.0.0
+
 ### Setup module
 
 The role uses facts gathered by Ansible on the remote host. If you disable the Setup module in your playbook, the role will not work properly.
@@ -109,7 +113,6 @@ docker_package_state: "present"
 
 # Validation and diagnostics
 docker_validate_system: true
-docker_enhanced_error_reporting: true
 ```
 
 ### Logging Configuration Example
@@ -193,7 +196,6 @@ Enable dedicated logging to separate Docker logs from system logs:
 | `docker_configure_rsyslog` | Configure rsyslog to write dockerd logs to file | `false` |
 | `docker_log_directory_path` | Log directory path (multi-component absolute path; cannot resolve to `/`, `/var`, `/var/log`, `/etc`, or `/usr`) | `"/var/log/docker"` |
 | `docker_rsyslog_conf_name` | Name of rsyslog config file in `/etc/rsyslog.d/` | `"99-docker.conf"` |
-| `docker_rsyslog_imjournal_filecreatemode` | imjournal file creation mode | `"0644"` |
 | `docker_rsyslog_log_file_owner` | Owner of the docker log file (empty string falls back to OS default) | `""` |
 | `docker_rsyslog_log_file_group` | Group of the docker log file (empty string falls back to OS default) | `""` |
 | `docker_rsyslog_log_file_mode` | Mode of the docker log file | `"0640"` |
@@ -235,13 +237,6 @@ creation settings.
 | `docker_backup_retention` | Number of retained backups | `7` |
 | `docker_backup_include_volumes_metadata` | Include volumes list and metadata | `false` |
 
-### Rootless Mode
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `docker_rootless_enabled` | Enable rootless Docker (opt-in, future enhancement) | `false` |
-| `docker_rootless_users` | Users to configure for rootless | `[]` |
-
 ### Networks
 
 | Variable | Description | Default |
@@ -263,16 +258,6 @@ creation settings.
 | `docker_validate_prerequisites` | Enable architecture and package manager validation | `true` |
 | `docker_collect_system_info` | Collect detailed system information for diagnostics | `true` |
 | `docker_connectivity_timeout` | Timeout for network connectivity checks (seconds) | `10` |
-
-### Error Reporting Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `docker_enhanced_error_reporting` | Enable enhanced error reporting with system diagnostics | `true` |
-| `docker_include_hardware_info` | Include system hardware information in error reports | `true` |
-| `docker_include_network_info` | Include network configuration in error reports | `true` |
-| `docker_include_package_info` | Include package manager state in error reports | `true` |
-| `docker_error_log_lines` | Maximum lines of log output to include in error reports | `50` |
 
 ## 📌 Role Properties
 
@@ -425,7 +410,6 @@ ansible-role-docker/
 │   ├── main.yml             # Main task orchestration
 │   ├── assert.yml           # Variable validation
 │   ├── validate.yml         # System validation and diagnostics
-│   ├── error_reporting.yml  # Enhanced error reporting
 │   ├── prerequisites.yml    # System preparation
 │   ├── repository.yml       # Repository configuration
 │   ├── install.yml          # Package installation

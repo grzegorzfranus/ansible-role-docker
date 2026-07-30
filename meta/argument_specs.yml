@@ -155,11 +155,6 @@ argument_specs:
         type: str
         default: "99-docker.conf"
 
-      docker_rsyslog_imjournal_filecreatemode:
-        description: "imjournal file creation mode"
-        type: str
-        default: "0644"
-
       docker_rsyslog_log_file_owner:
         description: "Owner of the Docker log file (empty string defaults to OS distribution default)"
         type: str
@@ -303,18 +298,6 @@ argument_specs:
         type: bool
         default: false
 
-      # Rootless
-      docker_rootless_enabled:
-        description: "Enable rootless Docker (opt-in, future)"
-        type: bool
-        default: false
-
-      docker_rootless_users:
-        description: "Users to configure for rootless Docker"
-        type: list
-        elements: str
-        default: []
-
       # Networks
       docker_networks:
         description: "List of user-defined networks to create"
@@ -353,29 +336,3 @@ argument_specs:
         description: "Timeout for network connectivity checks (seconds)"
         type: int
         default: 10
-
-      # Error Reporting
-      docker_enhanced_error_reporting:
-        description: "Enable enhanced error reporting with system diagnostics"
-        type: bool
-        default: true
-
-      docker_include_hardware_info:
-        description: "Include system hardware information in error reports"
-        type: bool
-        default: true
-
-      docker_include_network_info:
-        description: "Include network configuration in error reports"
-        type: bool
-        default: true
-
-      docker_include_package_info:
-        description: "Include package manager state in error reports"
-        type: bool
-        default: true
-
-      docker_error_log_lines:
-        description: "Maximum lines of log output to include in error reports"
-        type: int
-        default: 50

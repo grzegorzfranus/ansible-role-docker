@@ -34,4 +34,7 @@ galaxy_info:
     - devops
     - systemd
 
+collections:
+  - community.docker
+
 dependencies: []
