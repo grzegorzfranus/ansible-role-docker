@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.2.5...v1.2.6) (2026-07-30)
+
+
+### Miscellaneous
+
+* harden templates, extend validation and align with role standards ([#24](https://github.com/grzegorzfranus/ansible-role-docker/issues/24)) ([0937c19](https://github.com/grzegorzfranus/ansible-role-docker/commit/0937c19495988a4b1c0a09a104c1b0b505719573))
+
 ## [1.2.5](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.2.4...v1.2.5) (2026-07-30)
 
 
