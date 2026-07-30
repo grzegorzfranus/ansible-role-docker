@@ -6,13 +6,15 @@
 # up logrotate configuration for Docker logs.
 # =============================================================================
 
-- name: Docker | logging | Ensure rsyslog package is installed
+- name: Docker | logging | Ensure rsyslog and logrotate packages are installed
   become: true
   ansible.builtin.package:
-    name: rsyslog
+    name:
+      - rsyslog
+      - logrotate
     state: present
-  register: __docker_rsyslog_pkg_result
-  until: __docker_rsyslog_pkg_result is succeeded
+  register: __docker_logging_pkg_result
+  until: __docker_logging_pkg_result is succeeded
   retries: 3
   delay: 5
   when:
