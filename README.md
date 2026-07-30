@@ -400,7 +400,7 @@ ansible-role-docker/
 │   │   ├── molecule.yml     # Test configuration
 │   │   ├── converge.yml     # Multi-play convergence playbook (default & override)
 │   │   ├── prepare.yml      # Test preparation tasks (logrotate package)
-│   │   └── verify.yml       # Verification tests for rsyslog, logrotate, and owner override
+│   │   └── verify.yml       # Verification tests for rsyslog, logrotate, OS fallback, and owner override
 │   └── uninstall/            # Complete role uninstall scenario
 │       ├── molecule.yml     # Test configuration
 │       ├── converge.yml     # Multi-play convergence playbook (install, uninstall, guard check)

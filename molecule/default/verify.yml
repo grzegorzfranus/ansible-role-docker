@@ -3,7 +3,7 @@
 # =============================================================================
 
 ---
-- name: Verify
+- name: "molecule | Verify Default Scenario"
   hosts: all
   gather_facts: true
 

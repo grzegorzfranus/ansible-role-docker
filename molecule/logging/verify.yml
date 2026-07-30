@@ -43,6 +43,21 @@
         fail_msg: "/etc/rsyslog.d/99-docker.conf is missing or has incorrect permissions."
         success_msg: "/etc/rsyslog.d/99-docker.conf exists with mode 0644 root:root."
 
+    - name: Verify | Read recorded default log directory owner (V1 guard fallback)
+      ansible.builtin.command: cat /tmp/.v1_default_owner
+      register: __v1_default_owner_cmd
+      changed_when: false
+
+    - name: Verify | Assert V1 regression guard (default log directory owner matches OS fallback)
+      ansible.builtin.assert:
+        that:
+          - "__v1_default_owner_cmd.rc == 0"
+          - "__v1_default_owner_cmd.stdout | trim == __docker_os_log_user_default"
+        fail_msg: >-
+          V1 regression detected! Default log directory owner did not fallback to OS default
+          (expected {{ __docker_os_log_user_default }}, got {{ __v1_default_owner_cmd.stdout | trim }}).
+        success_msg: "V1 regression guard passed: default log directory owner matches OS default ({{ __docker_os_log_user_default }})."
+
     - name: Verify | Stat log directory /var/log/docker
       ansible.builtin.stat:
         path: /var/log/docker

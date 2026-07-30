@@ -46,6 +46,9 @@ verifier:
     verbose: true
 
 scenario:
+  # The 'idempotence' step is intentionally omitted: this scenario's converge
+  # runs default-owner -> explicit-owner-override plays in sequence, so a
+  # second converge always reports changes by design.
   test_sequence:
     - dependency
     - cleanup
@@ -54,7 +57,6 @@ scenario:
     - create
     - prepare
     - converge
-    - idempotence
     - verify
     - cleanup
     - destroy

@@ -1,8 +1,4 @@
 ---
-# Note: The idempotence step is intentionally omitted from the uninstall scenario
-# test sequence because the multi-play flow (install -> remove) is state-changing
-# by design and inherently non-idempotent across distinct plays.
-
 role_name_check: 1
 
 dependency:
@@ -50,6 +46,9 @@ verifier:
     verbose: true
 
 scenario:
+  # The 'idempotence' step is intentionally omitted: this scenario's converge
+  # runs install -> uninstall -> validation-rejection plays in sequence, so a
+  # second converge always reports changes by design.
   test_sequence:
     - dependency
     - cleanup

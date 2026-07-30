@@ -3,7 +3,7 @@
 # =============================================================================
 
 ---
-- name: Converge | Install Docker with Rsyslog logging and explicit owner override (V1 guard)
+- name: Converge | Install Docker with default rsyslog log owner
   hosts: all
 
   pre_tasks:
@@ -19,6 +19,26 @@
         update_cache: true
       changed_when: false
       when: ansible_facts['os_family'] == "RedHat"
+
+  roles:
+    - role: ../../..
+      vars:
+        docker_configure_rsyslog: true
+
+  post_tasks:
+    - name: Converge | Stat log directory after default installation
+      ansible.builtin.stat:
+        path: /var/log/docker
+      register: __docker_log_dir_default_stat
+
+    - name: Converge | Save default log directory owner to marker file
+      ansible.builtin.copy:
+        content: "{{ __docker_log_dir_default_stat.stat.pw_name }}"
+        dest: /tmp/.v1_default_owner
+        mode: "0644"
+
+- name: Converge | Re-apply with explicit owner override (V1 guard)
+  hosts: all
 
   roles:
     - role: ../../..
