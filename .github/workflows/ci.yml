@@ -151,10 +151,13 @@ jobs:
   # ================================================================
   ci:
     needs: [branch-name-lint, pr-title-lint]
-    uses: grzegorzfranus/github-workflows/.github/workflows/ansible-ci.yml@v3.0.1
+    uses: grzegorzfranus/github-workflows/.github/workflows/ansible-ci.yml@v3.1.1
     with:
       molecule-distros: '["ubuntu2404", "ubuntu2204", "debian12", "debian11", "rockylinux9"]'
       molecule-scenarios: '["default", "logging", "logging-override", "uninstall"]'
+      # This role is fully consistent across all four variable surfaces.
+      # Opt into error mode so the state cannot regress.
+      vars-validation-mode: "error"
 
   # ================================================================
   # 3. MERGE CHECK — Caller-level gate for branch protection
