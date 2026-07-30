@@ -218,9 +218,8 @@ argument_specs:
             type: bool
             default: true
           archive_directory_path:
-            description: "Archive directory for rotated logs"
+            description: "Archive directory for rotated logs (defaults to docker_log_directory_path if omitted)"
             type: str
-            default: "/var/log/docker"
           copytruncate:
             description: "Use copytruncate instead of moving files"
             type: bool
