@@ -1,0 +1,11 @@
+---
+# ==============================================================================
+# Ansible Variable Validation Waiver Configuration
+# ==============================================================================
+# File: .ansible-vars-validate.yml
+# Description: Defines explicit waivers for variable consistency validation in CI.
+# ==============================================================================
+
+ignore_dead:
+  - name: "docker_tcp_insecure_acknowledged"
+    reason: "Assert-only safety guard variable checked in tasks/assert.yml when insecure TCP socket is enabled."
