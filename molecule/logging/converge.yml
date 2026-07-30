@@ -3,7 +3,7 @@
 # =============================================================================
 
 ---
-- name: Converge | Install Docker with Rsyslog logging enabled
+- name: Converge | Install Docker with Rsyslog logging and explicit owner override (V1 guard)
   hosts: all
 
   pre_tasks:
@@ -24,3 +24,4 @@
     - role: ../../..
       vars:
         docker_configure_rsyslog: true
+        docker_rsyslog_log_file_owner: "nobody"

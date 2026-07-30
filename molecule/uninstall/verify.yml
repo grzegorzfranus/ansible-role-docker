@@ -3,7 +3,7 @@
 # =============================================================================
 
 ---
-- name: Verify
+- name: "molecule | Verify Uninstall Scenario"
   hosts: all
   gather_facts: true
 
@@ -45,6 +45,18 @@
         success_msg: "{{ item.item }} successfully removed."
       loop: "{{ __uninstall_stats.results }}"
 
+    - name: Verify | Stat custom log directory /var/log/docker
+      ansible.builtin.stat:
+        path: /var/log/docker
+      register: __docker_custom_log_dir_stat
+
+    - name: Verify | Assert custom log directory removed after uninstall
+      ansible.builtin.assert:
+        that:
+          - "not __docker_custom_log_dir_stat.stat.exists"
+        fail_msg: "Custom log directory /var/log/docker still exists after uninstall."
+        success_msg: "Custom log directory /var/log/docker successfully removed."
+
     - name: Verify | Stat /var/log directory (H2 Guard)
       ansible.builtin.stat:
         path: /var/log
@@ -56,11 +68,19 @@
         file_type: any
       register: __var_log_files
 
-    - name: Verify | Assert /var/log preserved with contents (H2 Guard)
+    - name: Verify | Stat H2 guard marker file
+      ansible.builtin.stat:
+        path: /tmp/.h2_guard_passed
+      register: __h2_marker_stat
+
+    - name: Verify | Assert H2 regression guard (role rejected /var/log path and /var/log remains intact)
       ansible.builtin.assert:
         that:
+          - "__h2_marker_stat.stat.exists"
           - "__var_log_stat.stat.exists"
           - "__var_log_stat.stat.isdir"
           - "__var_log_files.matched > 0"
-        fail_msg: "H2 regression detected! /var/log was deleted or emptied during Docker role removal."
-        success_msg: "H2 regression guard passed: /var/log exists and retains files after removal with docker_log_directory_path=/var/log."
+        fail_msg: >-
+          H2 regression detected! Role did not reject invalid docker_log_directory_path=/var/log or /var/log was deleted/emptied.
+        success_msg: >-
+          H2 regression guard passed: role validation rejected invalid docker_log_directory_path=/var/log and /var/log remains intact with files.

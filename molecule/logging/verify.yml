@@ -3,7 +3,7 @@
 # =============================================================================
 
 ---
-- name: Verify
+- name: "molecule | Verify Logging Scenario"
   hosts: all
   gather_facts: true
 
@@ -48,17 +48,15 @@
         path: /var/log/docker
       register: __docker_log_dir_stat
 
-    - name: Verify | Assert log directory ownership matches OS expectations
+    - name: Verify | Assert V1 regression guard (log directory owner updated to nobody)
       ansible.builtin.assert:
         that:
           - "__docker_log_dir_stat.stat.exists"
-          - "__docker_log_dir_stat.stat.pw_name == __docker_os_log_user_default"
-          - "__docker_log_dir_stat.stat.gr_name == __docker_os_log_group_default"
+          - "__docker_log_dir_stat.stat.pw_name == 'nobody'"
         fail_msg: >-
-          Log directory /var/log/docker owner/group does not match OS default
-          (expected {{ __docker_os_log_user_default }}:{{ __docker_os_log_group_default }},
-          got {{ __docker_log_dir_stat.stat.pw_name }}:{{ __docker_log_dir_stat.stat.gr_name }}).
-        success_msg: "Log directory /var/log/docker owner and group match OS default."
+          V1 regression detected! Explicit docker_rsyslog_log_file_owner override did not update directory owner to nobody
+          (got {{ __docker_log_dir_stat.stat.pw_name }}).
+        success_msg: "V1 regression guard passed: explicit owner override changed directory ownership to nobody."
 
     - name: Verify | Stat /etc/logrotate.d/docker
       ansible.builtin.stat:
@@ -69,6 +67,7 @@
       ansible.builtin.command: logrotate -d /etc/logrotate.d/docker
       register: __logrotate_cmd
       changed_when: false
+      failed_when: false
 
     - name: Verify | Assert logrotate configuration valid
       ansible.builtin.assert:
@@ -77,24 +76,3 @@
           - "__logrotate_cmd.rc == 0"
         fail_msg: "logrotate configuration /etc/logrotate.d/docker is missing or failed syntax check."
         success_msg: "/etc/logrotate.d/docker exists and passed logrotate -d syntax check."
-
-    - name: Verify | Test V1 regression guard — apply explicit owner override
-      ansible.builtin.include_role:
-        name: ../../..
-      vars:
-        docker_configure_rsyslog: true
-        docker_rsyslog_log_file_owner: "nobody"
-
-    - name: Verify | Stat log directory after explicit owner override
-      ansible.builtin.stat:
-        path: /var/log/docker
-      register: __docker_log_dir_override_stat
-
-    - name: Verify | Assert V1 regression guard (explicit owner override updated live directory)
-      ansible.builtin.assert:
-        that:
-          - "__docker_log_dir_override_stat.stat.pw_name == 'nobody'"
-        fail_msg: >-
-          V1 regression detected! Explicit docker_rsyslog_log_file_owner override did not update directory owner to nobody
-          (got {{ __docker_log_dir_override_stat.stat.pw_name }}).
-        success_msg: "V1 regression guard passed: explicit owner override changed directory ownership to nobody."

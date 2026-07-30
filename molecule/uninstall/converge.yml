@@ -36,3 +36,28 @@
       vars:
         docker_state: absent
         docker_configure_rsyslog: true
+
+- name: "Converge | Test invalid log directory protection (H2 Guard)"
+  hosts: all
+
+  tasks:
+    - name: Converge | Attempt removal with docker_log_directory_path=/var/log
+      block:
+        - name: Converge | Include role with invalid log directory path
+          ansible.builtin.include_role:
+            name: ../../..
+          vars:
+            docker_state: absent
+            docker_configure_rsyslog: true
+            docker_log_directory_path: "/var/log"
+
+        - name: Converge | Ensure marker file absent if validation failed to reject
+          ansible.builtin.file:
+            path: /tmp/.h2_guard_passed
+            state: absent
+      rescue:
+        - name: Converge | Create marker file on validation rejection of invalid log directory
+          ansible.builtin.file:
+            path: /tmp/.h2_guard_passed
+            state: touch
+            mode: "0644"
