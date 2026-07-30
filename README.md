@@ -37,6 +37,8 @@ This Ansible role installs and configures Docker Engine from official repositori
 | RHEL | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 | AlmaLinux | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 
+*Note: Debian 11 (Bullseye) remains supported by this role, but is excluded from active CI testing as it approaches LTS EOL on 2026-08-31.*
+
 ### Ansible version
 
 Ansible >= 2.15
