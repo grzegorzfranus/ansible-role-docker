@@ -33,9 +33,7 @@ This Ansible role installs and configures Docker Engine from official repositori
 | Debian | 13 (Trixie) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 | Debian | 12 (Bookworm) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 | Debian | 11 (Bullseye) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
-| Rocky Linux | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
-| RHEL | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
-| AlmaLinux | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
+| EL (RHEL, Rocky, Alma, Oracle) | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 
 *Note: Debian 11 (Bullseye) remains supported by this role, but is excluded from active CI testing as it approaches LTS EOL on 2026-08-31.*
 
