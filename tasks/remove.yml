@@ -143,3 +143,6 @@
     state: absent
   when:
     - docker_configure_rsyslog | bool
+    - docker_log_directory_path | length > 0
+    - docker_log_directory_path is absolute
+    - docker_log_directory_path not in ['/', '/var', '/var/log', '/etc', '/usr']

@@ -187,9 +187,9 @@ Enable dedicated logging to separate Docker logs from system logs:
 | `docker_log_directory_path` | Log directory path | `"/var/log/docker"` |
 | `docker_rsyslog_conf_name` | Name of rsyslog config file in `/etc/rsyslog.d/` | `"99-docker.conf"` |
 | `docker_rsyslog_imjournal_filecreatemode` | imjournal file creation mode | `"0644"` |
-| `docker_rsyslog_log_file_owner` | Owner of the docker log file (per-OS overrides) | `"root"` |
-| `docker_rsyslog_log_file_group` | Group of the docker log file (per-OS overrides) | `"adm"` |
-| `docker_rsyslog_log_file_mode` | Mode of the docker log file (per-OS overrides) | `"0640"` |
+| `docker_rsyslog_log_file_owner` | Owner of the docker log file (empty string falls back to OS default) | `""` |
+| `docker_rsyslog_log_file_group` | Group of the docker log file (empty string falls back to OS default) | `""` |
+| `docker_rsyslog_log_file_mode` | Mode of the docker log file | `"0640"` |
 | `docker_logrotate_options.frequency` | Logrotate frequency (`hourly`, `daily`, `weekly`, `monthly`) | `"weekly"` |
 | `docker_logrotate_options.count` | Number of rotated files to keep | `12` |
 | `docker_logrotate_options.missingok` | Don't error if log is missing | `true` |
@@ -200,10 +200,10 @@ Enable dedicated logging to separate Docker logs from system logs:
 | `docker_logrotate_options.archive_directory_path` | Archive directory for rotated logs | `"/var/log/docker"` |
 | `docker_logrotate_create.enabled` | When not using copytruncate, create a fresh file | `true` |
 | `docker_logrotate_create.mode` | New file mode (when creating) | `"0640"` |
-| `docker_logrotate_create.owner` | New file owner (when creating) | `"root"` (per-OS overrides) |
-| `docker_logrotate_create.group` | New file group (when creating) | `"adm"` (per-OS overrides) |
+| `docker_logrotate_create.owner` | New file owner (when creating, resolves OS default or override) | `""` |
+| `docker_logrotate_create.group` | New file group (when creating, resolves OS default or override) | `""` |
 
-Note: On Ubuntu, the role sets log file owner/group to `syslog:adm`; on EL9 it uses `root:root`. See OS-specific vars in `vars/`.
+Note: If `docker_rsyslog_log_file_owner` or `docker_rsyslog_log_file_group` are left empty (the default), the role falls back to OS distribution defaults: `syslog:adm` on Ubuntu, `root:adm` on Debian, and `root:root` on EL9. Setting explicit non-empty values overrides the OS default for both live log files and logrotate creation settings.
 
 ### Prune Timer
 

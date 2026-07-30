@@ -34,6 +34,19 @@
     owner: root
     group: root
     mode: '0644'
+  when:
+    - docker_enable_tcp_socket | bool
+  notify:
+    - Docker | handlers | Reload systemd
+    - Docker | handlers | Restart docker service
+
+- name: Docker | configure | Remove ExecStart override when TCP socket is disabled
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.service.d/override.conf
+    state: absent
+  when:
+    - not (docker_enable_tcp_socket | bool)
   notify:
     - Docker | handlers | Reload systemd
     - Docker | handlers | Restart docker service

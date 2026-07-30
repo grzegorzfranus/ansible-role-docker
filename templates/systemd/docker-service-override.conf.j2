@@ -1,6 +1,9 @@
 #jinja2: trim_blocks: True, lstrip_blocks: True
 {{ ansible_managed | comment }}
 [Service]
-# Reset default ExecStart and run dockerd without command-line flags
+# Reset the vendor ExecStart because 'hosts' in daemon.json conflicts with the
+# -H flag inherited from the packaged unit. The --containerd flag is preserved
+# so dockerd keeps using the system containerd instead of spawning its own.
 ExecStart=
-ExecStart=/usr/bin/dockerd
+ExecStart=/usr/bin/dockerd --containerd=/run/containerd/containerd.sock
+

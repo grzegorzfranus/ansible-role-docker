@@ -26,8 +26,8 @@
       }}
     state: "{{ docker_package_state }}"
     update_cache: true
-  register: __docker_installation_result
-  until: __docker_installation_result is succeeded
+  register: __docker_apt_installation_result
+  until: __docker_apt_installation_result is succeeded
   retries: 3
   delay: 10
   when:
@@ -45,8 +45,8 @@
         + docker_extra_packages
       }}
     state: "{{ docker_package_state }}"
-  register: __docker_installation_result
-  until: __docker_installation_result is succeeded
+  register: __docker_dnf_installation_result
+  until: __docker_dnf_installation_result is succeeded
   retries: 3
   delay: 10
   when:
@@ -74,6 +74,25 @@
     name: docker
     state: present
 
+- name: Docker | install | Verify docker_users exist on target host
+  ansible.builtin.command: "getent passwd {{ item }}"
+  register: __docker_user_check
+  changed_when: false
+  failed_when: false
+  loop: "{{ docker_users }}"
+  when:
+    - docker_users | length > 0
+
+- name: Docker | install | Assert all docker_users exist
+  ansible.builtin.assert:
+    that:
+      - item.rc == 0
+    fail_msg: "User '{{ item.item }}' specified in docker_users does not exist on target host"
+    success_msg: "Verified user '{{ item.item }}' exists"
+  loop: "{{ __docker_user_check.results | default([]) }}"
+  when:
+    - docker_users | length > 0
+
 - name: Docker | install | Add users to docker group
   become: true
   ansible.builtin.user:
@@ -88,7 +107,7 @@
   ansible.builtin.debug:
     msg:
       - "{{ __docker_installed_version.stdout | default('Docker installed') }}"
-      - "   Changed: {{ 'Yes' if __docker_installation_result.changed else 'No (already installed)' }}"
+      - "   Changed: {{ 'Yes' if (__docker_apt_installation_result.changed | default(false) or __docker_dnf_installation_result.changed | default(false)) else 'No (already installed)' }}"
     verbosity: 1
   when:
     - docker_collect_system_info | bool
@@ -97,7 +116,7 @@
   ansible.builtin.set_fact:
     __docker_installation_info:
       version: "{{ __docker_installed_version.stdout | default('unknown') }}"
-      installation_changed: "{{ __docker_installation_result.changed }}"
+      installation_changed: "{{ __docker_apt_installation_result.changed | default(false) or __docker_dnf_installation_result.changed | default(false) }}"
       client_binary_path: "/usr/bin/docker"
       daemon_binary_path: "/usr/bin/dockerd"
       client_binary_exists: "{{ __docker_client_binary.stat.exists }}"
@@ -111,7 +130,8 @@
   when:
     - docker_enhanced_error_reporting | bool
     - >-
-      (__docker_installation_result is defined and __docker_installation_result.failed | default(false)) or
+      (__docker_apt_installation_result is defined and __docker_apt_installation_result.failed | default(false)) or
+      (__docker_dnf_installation_result is defined and __docker_dnf_installation_result.failed | default(false)) or
       (__docker_installed_version is defined and __docker_installed_version.failed | default(false)) or
       (not __docker_client_binary.stat.exists) or
       (not __docker_daemon_binary.stat.exists)

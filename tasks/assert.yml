@@ -93,12 +93,13 @@
   ansible.builtin.assert:
     that:
       - docker_log_directory_path is string
+      - (docker_log_directory_path | length == 0) or (docker_log_directory_path is match('^/[^/]+/.+'))
       - docker_rsyslog_conf_name is string
       - docker_rsyslog_imjournal_filecreatemode is string
       - docker_rsyslog_log_file_owner is string
       - docker_rsyslog_log_file_group is string
       - docker_rsyslog_log_file_mode is string
-    fail_msg: "Invalid logging variables (types must be strings)"
+    fail_msg: "Invalid logging variables (types must be strings, docker_log_directory_path must be empty or multi-component absolute path)"
     success_msg: "Logging variables are valid"
 
 - name: Docker | assert | Validate logrotate options
