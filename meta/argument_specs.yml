@@ -185,7 +185,7 @@ argument_specs:
           compress: true
           nocreate: false
           dateext: true
-          archive_directory_path: "/var/log/docker"
+          archive_directory_path: ""
           copytruncate: true
         options:
           frequency:
@@ -220,6 +220,7 @@ argument_specs:
           archive_directory_path:
             description: "Archive directory for rotated logs (defaults to docker_log_directory_path if omitted)"
             type: str
+            default: ""
           copytruncate:
             description: "Use copytruncate instead of moving files"
             type: bool
