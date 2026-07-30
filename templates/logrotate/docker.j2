@@ -36,9 +36,12 @@
   # This ensures dockerd continues logging without interruption
   copytruncate
   {% else %}
-  {% if docker_logrotate_create.enabled | default(true) %}
+  {% set _c_owner = docker_logrotate_create.owner | default('', true) %}
+  {% set _c_group = docker_logrotate_create.group | default('', true) %}
+  {% set _owner = _c_owner if _c_owner | length > 0 else __docker_log_file_owner %}
+  {% set _group = _c_group if _c_group | length > 0 else __docker_log_file_group %}
   # Create a fresh log file after rotation when not using copytruncate
-  create {{ docker_logrotate_create.mode | default('0640') }} {{ docker_logrotate_create.owner | default('root') }} {{ docker_logrotate_create.group | default('adm') }}
+  create {{ docker_logrotate_create.mode | default('0640') }} {{ _owner }} {{ _group }}
   {% endif %}
   {% endif %}
   {% if docker_logrotate_options.dateext | default(true) %}

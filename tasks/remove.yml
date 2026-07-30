@@ -141,8 +141,12 @@
   ansible.builtin.file:
     path: "{{ docker_log_directory_path }}"
     state: absent
+  vars:
+    __docker_log_dir_normalized: "{{ docker_log_directory_path | regex_replace('/+$', '') }}"
   when:
     - docker_configure_rsyslog | bool
     - docker_log_directory_path | length > 0
-    - docker_log_directory_path is absolute
-    - docker_log_directory_path not in ['/', '/var', '/var/log', '/etc', '/usr']
+    - docker_log_directory_path is match('^/.+')
+    - >-
+      __docker_log_dir_normalized not in
+      ['', '/', '/var', '/var/log', '/etc', '/usr']

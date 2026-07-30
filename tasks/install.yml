@@ -74,6 +74,8 @@
     name: docker
     state: present
 
+# Justification: Using command for getent passwd to check user existence individually
+# without populating getent_passwd facts in hostvars
 - name: Docker | install | Verify docker_users exist on target host
   ansible.builtin.command: "getent passwd {{ item }}"
   register: __docker_user_check
@@ -107,7 +109,10 @@
   ansible.builtin.debug:
     msg:
       - "{{ __docker_installed_version.stdout | default('Docker installed') }}"
-      - "   Changed: {{ 'Yes' if (__docker_apt_installation_result.changed | default(false) or __docker_dnf_installation_result.changed | default(false)) else 'No (already installed)' }}"
+      - >-
+        Changed: {{ 'Yes' if (__docker_apt_installation_result.changed | default(false) or
+                             __docker_dnf_installation_result.changed | default(false))
+                 else 'No (already installed)' }}
     verbosity: 1
   when:
     - docker_collect_system_info | bool
@@ -116,7 +121,9 @@
   ansible.builtin.set_fact:
     __docker_installation_info:
       version: "{{ __docker_installed_version.stdout | default('unknown') }}"
-      installation_changed: "{{ __docker_apt_installation_result.changed | default(false) or __docker_dnf_installation_result.changed | default(false) }}"
+      installation_changed: >-
+        {{ __docker_apt_installation_result.changed | default(false) or
+           __docker_dnf_installation_result.changed | default(false) }}
       client_binary_path: "/usr/bin/docker"
       daemon_binary_path: "/usr/bin/dockerd"
       client_binary_exists: "{{ __docker_client_binary.stat.exists }}"
@@ -130,8 +137,11 @@
   when:
     - docker_enhanced_error_reporting | bool
     - >-
-      (__docker_apt_installation_result is defined and __docker_apt_installation_result.failed | default(false)) or
-      (__docker_dnf_installation_result is defined and __docker_dnf_installation_result.failed | default(false)) or
-      (__docker_installed_version is defined and __docker_installed_version.failed | default(false)) or
+      (__docker_apt_installation_result is defined and
+       __docker_apt_installation_result.failed | default(false)) or
+      (__docker_dnf_installation_result is defined and
+       __docker_dnf_installation_result.failed | default(false)) or
+      (__docker_installed_version is defined and
+       __docker_installed_version.failed | default(false)) or
       (not __docker_client_binary.stat.exists) or
       (not __docker_daemon_binary.stat.exists)

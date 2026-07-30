@@ -25,6 +25,11 @@
     path: /etc/systemd/system/docker.service.d
     state: directory
     mode: '0755'
+  when:
+    - (docker_enable_tcp_socket | bool) or
+      (docker_http_proxy | length > 0) or
+      (docker_https_proxy | length > 0) or
+      (docker_no_proxy | length > 0)
 
 - name: Docker | configure | Override ExecStart to avoid flag conflicts
   become: true

@@ -189,8 +189,8 @@ argument_specs:
         default:
           enabled: true
           mode: "0640"
-          owner: "root"
-          group: "adm"
+          owner: ""
+          group: ""
         options:
           enabled:
             description: "Create a fresh log file after rotation"
