@@ -1,12 +1,16 @@
 ---
-# Docker Service — Configure service startup and management.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Service Management
+# =============================================================================
+# Configures Docker service state, socket file permissions, and status checks.
+# =============================================================================
 
 - name: Docker | service | Enable and start docker
   become: true
   ansible.builtin.service:
     name: "{{ __docker_service_name }}"
-    enabled: "{{ docker_service_enabled }}"
-    state: started
+    enabled: "{{ docker_service_enabled | bool }}"
+    state: "{{ (docker_service_enabled | bool) | ternary('started', omit) }}"
 
 - name: Docker | service | Ensure docker socket has correct group/mode
   become: true
@@ -19,7 +23,7 @@
   failed_when: false
 
 - name: Docker | service | Verify service configuration (systemd)
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: "{{ __docker_service_name }}"
   register: __docker_service_status
   failed_when: false

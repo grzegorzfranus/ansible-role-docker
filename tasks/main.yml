@@ -1,6 +1,10 @@
 ---
-# Docker Main — Orchestrates role execution in order.
-# Flow: vars → validate → assert → OS check → prereqs → repo → install → configure → logging → service → prune → backup → audit → remove
+# =============================================================================
+# Ansible Role: Docker - Tasks: Main Orchestration
+# =============================================================================
+# Orchestrates role execution in order.
+# Flow: include_vars → validate → assert → OS check → prereqs → repo → install → configure → logging → service → prune → backup → audit → remove
+# =============================================================================
 
 - name: Docker | include_vars | Gather OS specific variables
   ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
@@ -18,8 +22,8 @@
         - "{{ role_path }}/vars"
   tags:
     - always
-    - setup
-    - init
+    - docker_setup
+    - docker_init
 
 - name: Docker | validate | Perform comprehensive system validation
   ansible.builtin.include_tasks: validate.yml
@@ -28,17 +32,17 @@
     - docker_state | lower != 'absent'
   tags:
     - always
-    - validate
-    - setup
-    - init
+    - docker_validate
+    - docker_setup
+    - docker_init
 
 - name: Docker | assert | Validate all role variables
   ansible.builtin.include_tasks: assert.yml
   tags:
     - always
-    - validate
-    - setup
-    - init
+    - docker_validate
+    - docker_setup
+    - docker_init
 
 - name: Docker | assert | Check if OS is supported
   ansible.builtin.assert:
@@ -51,41 +55,41 @@
     success_msg: "Running on supported OS: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
   tags:
     - always
-    - setup
-    - init
+    - docker_setup
+    - docker_init
 
 - name: Docker | prerequisites | Verify system prerequisites
   ansible.builtin.include_tasks: prerequisites.yml
   when:
     - docker_state | lower != 'absent'
   tags:
-    - install
-    - requirements
-    - setup
+    - docker_install
+    - docker_requirements
+    - docker_setup
 
 - name: Docker | repository | Configure package repositories
   ansible.builtin.include_tasks: repository.yml
   when:
     - docker_state | lower != 'absent'
   tags:
-    - requirements
-    - setup
+    - docker_requirements
+    - docker_setup
 
 - name: Docker | install | Install Docker packages
   ansible.builtin.include_tasks: install.yml
   when:
     - docker_state | lower != 'absent'
   tags:
-    - install
-    - setup
+    - docker_install
+    - docker_setup
 
 - name: Docker | configure | Configure daemon.json and systemd drop-ins
   ansible.builtin.include_tasks: configure.yml
   when:
     - docker_state | lower != 'absent'
   tags:
-    - configure
-    - setup
+    - docker_configure
+    - docker_setup
 
 - name: Docker | logging | Configure rsyslog and logrotate
   ansible.builtin.include_tasks: logging.yml
@@ -93,16 +97,16 @@
     - docker_state | lower != 'absent'
     - docker_configure_rsyslog | bool
   tags:
-    - configure
-    - logging
+    - docker_configure
+    - docker_logging
 
 - name: Docker | service | Enable and start docker service
   ansible.builtin.include_tasks: service.yml
   when:
     - docker_state | lower != 'absent'
   tags:
-    - setup
-    - service
+    - docker_setup
+    - docker_service
 
 - name: Docker | prune | Configure prune systemd timer
   ansible.builtin.include_tasks: prune.yml
@@ -110,8 +114,8 @@
     - docker_state | lower != 'absent'
     - docker_prune_enabled | bool
   tags:
-    - configure
-    - prune
+    - docker_configure
+    - docker_prune
 
 - name: Docker | backup | Configure backup systemd timer
   ansible.builtin.include_tasks: backup.yml
@@ -119,8 +123,8 @@
     - docker_state | lower != 'absent'
     - docker_backup_enabled | bool
   tags:
-    - configure
-    - backup
+    - docker_configure
+    - docker_backup
 
 - name: Docker | audit | Configure audit rule for docker.sock
   ansible.builtin.include_tasks: audit.yml
@@ -128,8 +132,8 @@
     - docker_state | lower != 'absent'
     - docker_audit_socket | bool
   tags:
-    - configure
-    - audit
+    - docker_configure
+    - docker_audit
 
 - name: Docker | state | Handle absent state
   ansible.builtin.include_tasks: remove.yml
@@ -137,6 +141,6 @@
     - docker_state | lower == 'absent'
   tags:
     - always
-    - init
-    - configure
-    - install
+    - docker_init
+    - docker_configure
+    - docker_install

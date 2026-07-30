@@ -28,7 +28,7 @@
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: 🧪 Docker | molecule | converge | Wait for systemd to complete initialization
-      command: systemctl is-system-running
+      ansible.builtin.command: systemctl is-system-running
       register: systemctl_status
       until: >
         'running' in systemctl_status.stdout or

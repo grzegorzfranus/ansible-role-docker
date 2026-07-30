@@ -1,9 +1,13 @@
 ---
-# Docker Handlers — Service management operations triggered by tasks.
+# =============================================================================
+# Ansible Role: Docker - Handlers: Service Management
+# =============================================================================
+# Service management operations triggered by tasks.
+# =============================================================================
 
 - name: Docker | handlers | Reload systemd
   become: true
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     daemon_reload: true
   when:
     - ansible_facts['service_mgr'] == 'systemd'
@@ -14,7 +18,7 @@
     name: "{{ __docker_service_name }}"
     state: restarted
   when:
-    - not (ansible_virtualization_type is defined and ansible_virtualization_type == 'docker')
+    - docker_manage_service_restart | bool
 
 - name: Docker | handlers | Restart rsyslog
   become: true
@@ -22,12 +26,14 @@
     name: rsyslog
     state: restarted
   when:
-    - not (ansible_virtualization_type is defined and ansible_virtualization_type == 'docker')
+    - docker_manage_service_restart | bool
 
+# Justification: augenrules --load is required on EL9/systemd systems because
+# systemctl restart auditd is refused by systemd.
 - name: Docker | handlers | Restart auditd
   become: true
-  ansible.builtin.service:
-    name: auditd
-    state: restarted
+  ansible.builtin.command:
+    cmd: augenrules --load
+  changed_when: true
   when:
-    - not (ansible_virtualization_type is defined and ansible_virtualization_type == 'docker')
+    - docker_manage_service_restart | bool

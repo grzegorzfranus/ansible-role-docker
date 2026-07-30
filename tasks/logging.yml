@@ -1,5 +1,22 @@
 ---
-# Docker Logging — Configure rsyslog, logrotate, and log file management.
+# =============================================================================
+# Ansible Role: Docker - Tasks: File Logging and Log Rotation
+# =============================================================================
+# Installs rsyslog when required, configures dockerd log redirection, and sets
+# up logrotate configuration for Docker logs.
+# =============================================================================
+
+- name: Docker | logging | Ensure rsyslog package is installed
+  become: true
+  ansible.builtin.package:
+    name: rsyslog
+    state: present
+  register: __docker_rsyslog_pkg_result
+  until: __docker_rsyslog_pkg_result is succeeded
+  retries: 3
+  delay: 5
+  when:
+    - docker_configure_rsyslog | bool
 
 - name: Docker | logging | Ensure custom log directory exists
   become: true
@@ -76,6 +93,7 @@
     group: root
     mode: "0644"
     backup: true
+    validate: "logrotate -d %s"
 
 - name: Docker | logging | Display logging configuration status
   ansible.builtin.debug:

@@ -9,7 +9,7 @@ galaxy_info:
     pruning and backups, and comprehensive validation with error reporting.
   license: Apache-2.0
   company: EWARE
-  min_ansible_version: "2.16"
+  min_ansible_version: "2.15"
 
   platforms:
     - name: Debian

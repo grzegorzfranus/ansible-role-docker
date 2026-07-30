@@ -1,5 +1,9 @@
 ---
-# Docker Prune — Configure systemd timer for docker system prune.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Prune Timer Configuration
+# =============================================================================
+# Configures systemd timer and service for periodic Docker system prune.
+# =============================================================================
 
 - name: Docker | prune | Deploy systemd service
   become: true
@@ -9,6 +13,7 @@
     owner: root
     group: root
     mode: '0644'
+    backup: true
   notify: Docker | handlers | Reload systemd
 
 - name: Docker | prune | Deploy systemd timer
@@ -19,11 +24,12 @@
     owner: root
     group: root
     mode: '0644'
+    backup: true
   notify: Docker | handlers | Reload systemd
 
 - name: Docker | prune | Enable and start timer
   become: true
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: docker-prune.timer
     enabled: true
     state: started

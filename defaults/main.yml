@@ -34,11 +34,17 @@
 # Control overall role behavior: install or uninstall
 docker_state: "present"
 
+# Opt-in flag to remove /var/lib/docker data during role uninstallation
+docker_remove_data: false
+
 # -----------------------------------------------------------------------------
 # 2. General Settings
 # -----------------------------------------------------------------------------
 # Manage and enable Docker service
 docker_service_enabled: true
+
+# Control whether service restart handlers are executed (set to false in container test environments)
+docker_manage_service_restart: true
 
 # Package state for Docker packages (present|latest)
 docker_package_state: "present"
@@ -62,6 +68,15 @@ docker_extra_packages: []
 # By default bind only to the Unix socket
 docker_enable_tcp_socket: false
 docker_tcp_listen: "0.0.0.0:2375"  # Non-TLS TCP; use with caution
+
+# TLS configuration for TCP socket
+docker_tcp_tls_enabled: false
+docker_tcp_tls_cacert: ""
+docker_tcp_tls_cert: ""
+docker_tcp_tls_key: ""
+
+# Acknowledge unencrypted TCP socket on non-loopback address when TLS is disabled
+docker_tcp_insecure_acknowledged: false
 
 # Default log-driver and options
 docker_log_driver: "json-file"
@@ -120,12 +135,13 @@ docker_logrotate_create:
 # -----------------------------------------------------------------------------
 docker_prune_enabled: false
 docker_prune_frequency: "weekly"  # daily|weekly|monthly
-docker_prune_flags: "--all --volumes --force"
+docker_prune_flags: "--force"
 
 # -----------------------------------------------------------------------------
 # 8. Backup Timer
 # -----------------------------------------------------------------------------
 docker_backup_enabled: false
+docker_backup_frequency: "daily"  # hourly|daily|weekly|monthly
 docker_backup_path: "/var/backups/docker"
 docker_backup_retention: 7
 docker_backup_include_volumes_metadata: false

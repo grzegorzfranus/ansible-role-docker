@@ -1,5 +1,10 @@
 ---
-# Docker Install — Install Docker packages and verify binaries.
+# =============================================================================
+# Ansible Role: Docker - Tasks: Package Installation
+# =============================================================================
+# Installs Docker Engine packages, compose/buildx plugins, and adds configured
+# users to the docker group.
+# =============================================================================
 
 - name: Docker | install | Check if Docker is already installed
   ansible.builtin.command: "docker --version"

@@ -17,9 +17,19 @@ argument_specs:
           - present
           - absent
 
+      docker_remove_data:
+        description: "Opt-in flag to remove /var/lib/docker data during role uninstallation"
+        type: bool
+        default: false
+
       # General
       docker_service_enabled:
         description: "Whether the Docker service starts automatically on boot"
+        type: bool
+        default: true
+
+      docker_manage_service_restart:
+        description: "Control whether service restart handlers are executed"
         type: bool
         default: true
 
@@ -56,7 +66,7 @@ argument_specs:
 
       # Daemon
       docker_enable_tcp_socket:
-        description: "Enable dockerd TCP socket in addition to unix socket (no TLS)"
+        description: "Enable dockerd TCP socket in addition to unix socket"
         type: bool
         default: false
 
@@ -64,6 +74,31 @@ argument_specs:
         description: "TCP listen address when TCP socket is enabled"
         type: str
         default: "0.0.0.0:2375"
+
+      docker_tcp_tls_enabled:
+        description: "Enable TLS verification for TCP socket"
+        type: bool
+        default: false
+
+      docker_tcp_tls_cacert:
+        description: "Path to CA certificate for TLS verification"
+        type: str
+        default: ""
+
+      docker_tcp_tls_cert:
+        description: "Path to server certificate for TLS"
+        type: str
+        default: ""
+
+      docker_tcp_tls_key:
+        description: "Path to server private key for TLS"
+        type: str
+        default: ""
+
+      docker_tcp_insecure_acknowledged:
+        description: "Acknowledge unencrypted TCP socket on non-loopback address when TLS is disabled"
+        type: bool
+        default: false
 
       docker_log_driver:
         description: "Default Docker log driver"
@@ -150,12 +185,13 @@ argument_specs:
           compress: true
           nocreate: false
           dateext: true
-          archive_directory_path: "/var/log/docker"
+          archive_directory_path: ""
           copytruncate: true
         options:
           frequency:
             description: "Log rotation frequency"
             type: str
+            default: "weekly"
             choices:
               - hourly
               - daily
@@ -164,24 +200,31 @@ argument_specs:
           count:
             description: "Number of rotated log files to keep"
             type: int
+            default: 12
           missingok:
             description: "Don't error if log file is missing"
             type: bool
+            default: true
           compress:
             description: "Compress rotated log files"
             type: bool
+            default: true
           nocreate:
             description: "Don't create new log files after rotation"
             type: bool
+            default: false
           dateext:
             description: "Use date extension for rotated files"
             type: bool
+            default: true
           archive_directory_path:
             description: "Archive directory for rotated logs"
             type: str
+            default: ""
           copytruncate:
             description: "Use copytruncate instead of moving files"
             type: bool
+            default: true
 
       docker_logrotate_create:
         description: "Logrotate create options when copytruncate is disabled"
@@ -195,15 +238,19 @@ argument_specs:
           enabled:
             description: "Create a fresh log file after rotation"
             type: bool
+            default: true
           mode:
             description: "New file mode"
             type: str
+            default: "0640"
           owner:
             description: "New file owner"
             type: str
+            default: ""
           group:
             description: "New file group"
             type: str
+            default: ""
 
       # Prune
       docker_prune_enabled:
@@ -223,13 +270,23 @@ argument_specs:
       docker_prune_flags:
         description: "Flags passed to docker system prune"
         type: str
-        default: "--all --volumes --force"
+        default: "--force"
 
       # Backup
       docker_backup_enabled:
         description: "Enable systemd backup timer"
         type: bool
         default: false
+
+      docker_backup_frequency:
+        description: "Backup cadence"
+        type: str
+        default: "daily"
+        choices:
+          - hourly
+          - daily
+          - weekly
+          - monthly
 
       docker_backup_path:
         description: "Backup destination directory"

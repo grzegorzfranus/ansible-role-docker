@@ -10,6 +10,12 @@ permissions:
   contents: read
 
 jobs:
+  # ================================================================
+  # 1. RELEASE PLEASE (Automated Versioning & Changelogs)
+  # ----------------------------------------------------------------
+  # Evaluates Conventional Commit messages on main branch, creates
+  # or updates release PRs, and cuts tags upon merge.
+  # ================================================================
   release-please:
     name: "📝 Run Release Please"
     runs-on: ubuntu-latest
@@ -28,6 +34,12 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+  # ================================================================
+  # 2. VALIDATE RELEASE PR
+  # ----------------------------------------------------------------
+  # Validates syntax, yamllint, actionlint, and Ansible Galaxy metadata
+  # on Release Please PRs.
+  # ================================================================
   validate-release-pr:
     name: "🔍 Validate Release PR"
     needs: [release-please]
@@ -107,6 +119,11 @@ jobs:
             -f description="All validations passed (Release PR)"
           echo "Set 'Merge Check' status on commit $PR_SHA"
 
+  # ================================================================
+  # 3. PUBLISH TO ANSIBLE GALAXY
+  # ----------------------------------------------------------------
+  # Publishes tagged releases to Ansible Galaxy.
+  # ================================================================
   publish-to-galaxy:
     name: "Publish to Galaxy"
     needs: [release-please]
