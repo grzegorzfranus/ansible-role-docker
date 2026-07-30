@@ -27,13 +27,15 @@ This Ansible role installs and configures Docker Engine from official repositori
 
 | OS Family | Version | Status |
 |-----------|---------|--------|
+| Ubuntu | 26.04 (Resolute) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 | Ubuntu | 24.04 (Noble) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 | Ubuntu | 22.04 (Jammy) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
+| Debian | 13 (Trixie) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 | Debian | 12 (Bookworm) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
 | Debian | 11 (Bullseye) | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
-| Rocky Linux | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
-| RHEL | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
-| AlmaLinux | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
+| EL (RHEL, Rocky, Alma, Oracle) | 9 | ![✓](https://img.shields.io/badge/✓-brightgreen.svg) |
+
+*Note: Debian 11 (Bullseye) remains supported by this role, but is excluded from active CI testing as it approaches LTS EOL on 2026-08-31.*
 
 ### Ansible version
 
@@ -442,9 +444,11 @@ ansible-role-docker/
     ├── main.yml             # Internal role variables
     ├── debian_11.yml        # Debian 11 specific variables
     ├── debian_12.yml        # Debian 12 specific variables
+    ├── debian_13.yml        # Debian 13 specific variables
     ├── redhat_9.yml         # EL9 specific variables (Rocky/RHEL/Alma 9)
     ├── ubuntu_22.04.yml     # Ubuntu 22.04 specific variables
-    └── ubuntu_24.04.yml     # Ubuntu 24.04 specific variables
+    ├── ubuntu_24.04.yml     # Ubuntu 24.04 specific variables
+    └── ubuntu_26.04.yml     # Ubuntu 26.04 specific variables
 ```
 
 ## Example Playbook
@@ -480,7 +484,7 @@ Runs on every Pull Request in a two-tier gate pattern:
 4. **Ansible Lint** — checks Ansible best practices and role standards
 5. **Galaxy Metadata & Variable Consistency Validation** — verifies `meta/main.yml` schema and enforces strict variable consistency across `defaults/main.yml`, `meta/argument_specs.yml`, `tasks/assert.yml`, and `README.md` in `vars-validation-mode: error` (`ansible-meta-validate.yml`)
 6. **Security Scanning** — TruffleHog secret detection and Trivy IaC scanning (`ansible-security.yml`)
-7. **Molecule Integration Tests** — executes Molecule test matrix across Ubuntu 24.04/22.04, Debian 12/11, and Rocky Linux 9 (`ansible-molecule.yml`). Four distinct scenarios are executed: `default` (core installation, service, socket, and daemon configuration), `logging` (rsyslog, logrotate, and OS default log owner fallback), `logging-override` (rsyslog log owner override, `copytruncate: false`, and `create` directive consistency), and `uninstall` (clean removal of packages, units, and configuration while preserving system logs).
+7. **Molecule Integration Tests** — executes Molecule test matrix across Ubuntu 26.04/24.04/22.04, Debian 13/12, and Rocky Linux 9 (`ansible-molecule.yml`). Four distinct scenarios are executed: `default` (core installation, service, socket, and daemon configuration), `logging` (rsyslog, logrotate, and OS default log owner fallback), `logging-override` (rsyslog log owner override, `copytruncate: false`, and `create` directive consistency), and `uninstall` (clean removal of packages, units, and configuration while preserving system logs).
 8. **Merge Check Gate** — single authoritative status check aggregating all results for branch protection
 
 ### Release & Publish Pipeline (`ansible-publish.yml@v3.1.1`)
