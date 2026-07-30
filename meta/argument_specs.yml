@@ -4,7 +4,7 @@ argument_specs:
     short_description: "Install and configure Docker Engine on Debian-based and EL9 systems"
     description:
       - "Installs Docker Engine, configures the daemon, and manages optional features like logging, pruning, and backups."
-      - "Supports Ubuntu 22.04/24.04, Debian 11/12, and EL9 (Rocky Linux 9, RHEL 9, AlmaLinux 9)."
+      - "Supports Ubuntu 22.04/24.04/26.04, Debian 11/12/13, and EL9 (Rocky Linux 9, RHEL 9, AlmaLinux 9)."
     author: "Grzegorz Franus"
 
     options:

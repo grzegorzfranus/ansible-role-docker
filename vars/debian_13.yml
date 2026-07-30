@@ -1,0 +1,5 @@
+---
+# Debian 13 (trixie)
+__docker_apt_codename: "trixie"
+__docker_os_log_user_default: "root"
+__docker_os_log_group_default: "adm"

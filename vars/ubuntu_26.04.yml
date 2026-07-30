@@ -1,0 +1,5 @@
+---
+# Ubuntu 26.04 (resolute)
+__docker_apt_codename: "resolute"
+__docker_os_log_user_default: "syslog"
+__docker_os_log_group_default: "adm"
