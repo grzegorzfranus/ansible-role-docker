@@ -468,9 +468,9 @@ ansible-role-docker/
 
 ## CI/CD Pipeline
 
-This repository uses centralized, reusable GitHub Actions workflows from [grzegorzfranus/github-workflows](https://github.com/grzegorzfranus/github-workflows) (`v3.1.0`) for quality assurance, security scanning, and release automation.
+This repository uses centralized, reusable GitHub Actions workflows from [grzegorzfranus/github-workflows](https://github.com/grzegorzfranus/github-workflows) (`v3.1.1`) for quality assurance, security scanning, and release automation.
 
-### CI Pipeline (`ansible-ci.yml@v3.1.0`)
+### CI Pipeline (`ansible-ci.yml@v3.1.1`)
 
 Runs on every Pull Request in a two-tier gate pattern:
 
@@ -483,14 +483,14 @@ Runs on every Pull Request in a two-tier gate pattern:
 7. **Molecule Integration Tests** — executes Molecule test matrix across Ubuntu 24.04/22.04, Debian 12/11, and Rocky Linux 9 (`ansible-molecule.yml`). Four distinct scenarios are executed: `default` (core installation, service, socket, and daemon configuration), `logging` (rsyslog, logrotate, and OS default log owner fallback), `logging-override` (rsyslog log owner override, `copytruncate: false`, and `create` directive consistency), and `uninstall` (clean removal of packages, units, and configuration while preserving system logs).
 8. **Merge Check Gate** — single authoritative status check aggregating all results for branch protection
 
-### Release & Publish Pipeline (`ansible-publish.yml@v3.1.0`)
+### Release & Publish Pipeline (`ansible-publish.yml@v3.1.1`)
 
 Automated via [Release Please](https://github.com/googleapis/release-please):
 
 1. **Push to `main`** → Release Please creates or updates a Release PR with automated changelog generation
 2. **Release PR Validation** → validates YAML syntax and actions schema before setting `Merge Check` status
 3. **Merge Release PR** → creates Git version tag and GitHub Release automatically
-4. **Ansible Galaxy Publish** → publishes tagged release to Ansible Galaxy via `ansible-publish.yml@v3.1.0` with exponential backoff retry logic
+4. **Ansible Galaxy Publish** → publishes tagged release to Ansible Galaxy via `ansible-publish.yml@v3.1.1` with exponential backoff retry logic
 
 ## 🤝 Contributing
 
