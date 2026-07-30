@@ -146,7 +146,7 @@
   when:
     - docker_configure_rsyslog | bool
     - docker_log_directory_path | length > 0
-    - docker_log_directory_path is match('^/.+')
+    - docker_log_directory_path is match('^/[^/]+/.+')
     - docker_log_directory_path is not match('.*/\..*')
     - >-
       __docker_log_dir_normalized not in
