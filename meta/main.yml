@@ -6,7 +6,7 @@ galaxy_info:
   description: >
     Ansible role for installing and configuring Docker Engine from official repositories
     with secure defaults, daemon configuration, optional dedicated logging, scheduled
-    pruning and backups, and comprehensive validation with error reporting.
+    pruning and backups, and comprehensive variable validation.
   license: Apache-2.0
   company: EWARE
   # Minimum Ansible version 2.15 (aligned with ansible-role-chrony; no 2.16-specific module options required)
@@ -33,5 +33,8 @@ galaxy_info:
     - logging
     - devops
     - systemd
+
+collections:
+  - community.docker
 
 dependencies: []

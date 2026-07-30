@@ -21,11 +21,9 @@
 #   6. Logging to Files (rsyslog + logrotate)
 #   7. Prune Timer
 #   8. Backup Timer
-#   9. Rootless Mode
-#   10. Networks
-#   11. Audit
-#   12. System Validation Settings
-#   13. Error Reporting Configuration
+#   9. Networks
+#   10. Audit
+#   11. System Validation Settings
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -93,6 +91,7 @@ docker_daemon_extra: {}
 # -----------------------------------------------------------------------------
 # 5. Proxy and Registry
 # -----------------------------------------------------------------------------
+# Proxy configuration for Docker service
 docker_http_proxy: ""
 docker_https_proxy: ""
 docker_no_proxy: ""
@@ -106,7 +105,6 @@ docker_configure_rsyslog: false
 docker_log_directory_path: "/var/log/docker"
 # Rsyslog file and options
 docker_rsyslog_conf_name: "99-docker.conf"
-docker_rsyslog_imjournal_filecreatemode: "0644"
 # Target log file ownership and permissions (empty string defaults to OS-specific default:
 # syslog/adm on Ubuntu, root/adm on Debian, root/root on EL)
 docker_rsyslog_log_file_owner: ""
@@ -147,24 +145,18 @@ docker_backup_retention: 7
 docker_backup_include_volumes_metadata: false
 
 # -----------------------------------------------------------------------------
-# 9. Rootless Mode
-# -----------------------------------------------------------------------------
-docker_rootless_enabled: false
-docker_rootless_users: []
-
-# -----------------------------------------------------------------------------
-# 10. Networks
+# 9. Networks
 # -----------------------------------------------------------------------------
 # Example: [{ name: "app-net", driver: "bridge", subnet: "172.30.0.0/16" }]
 docker_networks: []
 
 # -----------------------------------------------------------------------------
-# 11. Audit
+# 10. Audit
 # -----------------------------------------------------------------------------
 docker_audit_socket: false
 
 # -----------------------------------------------------------------------------
-# 12. System Validation Settings
+# 11. System Validation Settings
 # -----------------------------------------------------------------------------
 # Enable comprehensive system validation checks
 docker_validate_system: true
@@ -180,21 +172,3 @@ docker_collect_system_info: true
 
 # Timeout for network connectivity checks (seconds)
 docker_connectivity_timeout: 10
-
-# -----------------------------------------------------------------------------
-# 13. Error Reporting Configuration
-# -----------------------------------------------------------------------------
-# Enable enhanced error reporting with system diagnostics
-docker_enhanced_error_reporting: true
-
-# Include system hardware information in error reports
-docker_include_hardware_info: true
-
-# Include network configuration in error reports
-docker_include_network_info: true
-
-# Include package manager state in error reports
-docker_include_package_info: true
-
-# Maximum lines of log output to include in error reports
-docker_error_log_lines: 50

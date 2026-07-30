@@ -2,10 +2,10 @@
 # =============================================================================
 # Ansible Role: Docker - Tasks: User-defined Networks
 # =============================================================================
-# Creates user-defined Docker networks using community.docker module or CLI fallback.
+# Creates user-defined Docker networks using community.docker module.
 # =============================================================================
 
-- name: Docker | network | Create user-defined networks via module
+- name: Docker | network | Create user-defined networks
   community.docker.docker_network:
     name: "{{ item.name }}"
     driver: "{{ item.driver | default('bridge') }}"
@@ -13,20 +13,5 @@
       {{ [{'subnet': item.subnet}] if item.subnet is defined else omit }}
     state: present
   loop: "{{ docker_networks }}"
-  register: __docker_network_module_result
-  ignore_errors: true
   when:
     - item.name is defined
-
-- name: Docker | network | Fallback creation via docker CLI when module not available
-  ansible.builtin.command: >-
-    docker network create
-    --driver {{ item.driver | default('bridge') }}
-    {% if item.subnet is defined %}--subnet {{ item.subnet }}{% endif %}
-    {{ item.name }}
-  args:
-    creates: "/var/lib/docker/network/files/local-kv.db"
-  when:
-    - item.name is defined
-    - __docker_network_module_result is failed
-  loop: "{{ docker_networks }}"

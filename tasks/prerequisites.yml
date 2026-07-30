@@ -71,11 +71,3 @@
     verbosity: 1
   when:
     - docker_collect_system_info | bool
-
-- name: Docker | prerequisites | Handle installation errors
-  ansible.builtin.include_tasks: error_reporting.yml
-  when:
-    - docker_enhanced_error_reporting | bool
-    - >-
-      (__docker_debian_prereqs_result is defined and __docker_debian_prereqs_result.failed | default(false)) or
-      (__docker_el_prereqs_result is defined and __docker_el_prereqs_result.failed | default(false))

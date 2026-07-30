@@ -155,7 +155,6 @@
          docker_log_directory_path is not match('.*/\..*') and
          __docker_log_dir_norm not in ['/', '/var', '/var/log', '/etc', '/usr'])
       - docker_rsyslog_conf_name is string
-      - docker_rsyslog_imjournal_filecreatemode is string
       - docker_rsyslog_log_file_owner is string
       - docker_rsyslog_log_file_group is string
       - docker_rsyslog_log_file_mode is string
@@ -229,18 +228,7 @@
     success_msg: "Backup settings are valid"
 
 # -----------------------------------------------------------------------------
-# 9. Rootless Mode
-# -----------------------------------------------------------------------------
-- name: Docker | assert | Validate rootless configuration
-  ansible.builtin.assert:
-    that:
-      - docker_rootless_enabled is boolean
-      - docker_rootless_users is sequence
-    fail_msg: "Invalid rootless mode configuration"
-    success_msg: "Rootless mode configuration is valid"
-
-# -----------------------------------------------------------------------------
-# 10. Networks
+# 9. Networks
 # -----------------------------------------------------------------------------
 - name: Docker | assert | Validate docker_networks structure
   ansible.builtin.assert:
@@ -258,7 +246,7 @@
     success_msg: "docker_networks structure is valid"
 
 # -----------------------------------------------------------------------------
-# 11. Audit
+# 10. Audit
 # -----------------------------------------------------------------------------
 - name: Docker | assert | Validate audit configuration
   ansible.builtin.assert:
@@ -268,7 +256,7 @@
     success_msg: "Audit configuration is valid"
 
 # -----------------------------------------------------------------------------
-# 12. System Validation Settings
+# 11. System Validation Settings
 # -----------------------------------------------------------------------------
 - name: Docker | assert | Validate system validation flags
   ansible.builtin.assert:
@@ -280,26 +268,6 @@
       - (docker_connectivity_timeout | int) > 0
     fail_msg: "Validation flags must be boolean and timeout must be > 0"
     success_msg: "Validation flags are valid"
-
-# -----------------------------------------------------------------------------
-# 13. Error Reporting Configuration
-# -----------------------------------------------------------------------------
-- name: Docker | assert | Validate error reporting flags
-  ansible.builtin.assert:
-    that:
-      - docker_enhanced_error_reporting is boolean
-      - docker_include_hardware_info is boolean
-      - docker_include_network_info is boolean
-      - docker_include_package_info is boolean
-      - (docker_error_log_lines | int) >= 0
-    fail_msg: >-
-      Invalid error reporting configuration:
-      docker_enhanced_error_reporting={{ docker_enhanced_error_reporting }},
-      docker_include_hardware_info={{ docker_include_hardware_info }},
-      docker_include_network_info={{ docker_include_network_info }},
-      docker_include_package_info={{ docker_include_package_info }},
-      docker_error_log_lines={{ docker_error_log_lines }}
-    success_msg: "Error reporting flags are valid"
 
 - name: Docker | assert | Report validation results
   ansible.builtin.debug:
