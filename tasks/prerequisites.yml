@@ -56,7 +56,7 @@
 - name: Docker | prerequisites | Check if /var/lib/docker is a separate mount
   ansible.builtin.set_fact:
     __docker_var_lib_is_mount: >-
-      {{ (ansible_facts.mounts | default(ansible_mounts | default([]))) | selectattr('mount', 'equalto', '/var/lib/docker') | list | length > 0 }}
+      {{ (ansible_facts.mounts | default([])) | selectattr('mount', 'equalto', '/var/lib/docker') | list | length > 0 }}
 
 - name: Docker | prerequisites | Warn if /var/lib/docker is not a separate filesystem
   ansible.builtin.debug:
