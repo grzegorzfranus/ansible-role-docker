@@ -39,12 +39,8 @@
 
 - name: Docker | remove | Remove apt repository
   become: true
-  ansible.builtin.apt_repository:
-    repo: >-
-      deb [arch={{ __docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc]
-      https://download.docker.com/linux/{{ 'ubuntu' if ansible_facts.distribution | lower == 'ubuntu' else 'debian' }}
-      {{ __docker_apt_codename }} stable
-    filename: docker
+  ansible.builtin.deb822_repository:
+    name: docker
     state: absent
   when:
     - ansible_facts['os_family'] == 'Debian'

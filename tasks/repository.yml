@@ -33,14 +33,21 @@
 
 - name: Docker | repository | Set up apt repository
   become: true
-  ansible.builtin.apt_repository:
-    repo: >-
-      deb [arch={{ __docker_apt_arch }} signed-by=/etc/apt/keyrings/docker.asc]
-      https://download.docker.com/linux/{{ 'ubuntu' if ansible_facts.distribution | lower == 'ubuntu' else 'debian' }}
-      {{ __docker_apt_codename }} stable
+  ansible.builtin.deb822_repository:
+    name: docker
+    types:
+      - deb
+    architectures:
+      - "{{ __docker_apt_arch }}"
+    uris:
+      - "https://download.docker.com/linux/{{ 'ubuntu' if ansible_facts.distribution | lower == 'ubuntu' else 'debian' }}"
+    suites:
+      - "{{ __docker_apt_codename }}"
+    components:
+      - stable
+    signed_by: /etc/apt/keyrings/docker.asc
     state: present
-    filename: docker
-    update_cache: true
+    enabled: true
   when:
     - ansible_facts['os_family'] == 'Debian'
 
