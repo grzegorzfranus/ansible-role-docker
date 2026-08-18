@@ -48,7 +48,7 @@
   {% if docker_logrotate_options.dateext | default(true) %}
   # Add date to name of archive log files
   dateext
-  dateformat .%Y-%m-%d
+  dateformat {{ docker_logrotate_options.dateformat | default('.%Y-%m-%d') }}
   {% endif %}
   # Archive log directory path
   olddir {{ docker_logrotate_options.archive_directory_path | default(docker_log_directory_path, true) }}

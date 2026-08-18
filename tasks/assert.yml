@@ -185,7 +185,10 @@
       - docker_logrotate_options.copytruncate is boolean
       - docker_logrotate_options.dateext is defined
       - docker_logrotate_options.dateext is boolean
-    fail_msg: "Invalid logrotate configuration options"
+      - docker_logrotate_options.dateformat is not defined or
+        (docker_logrotate_options.dateformat is string and
+         docker_logrotate_options.dateformat | length > 0)
+    fail_msg: "Invalid logrotate configuration options (dateformat must be a non-empty string when provided)"
     success_msg: "Logrotate configuration options are valid"
 
 - name: Docker | assert | Validate logrotate create options

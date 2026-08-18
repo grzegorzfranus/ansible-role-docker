@@ -120,6 +120,8 @@ docker_logrotate_options:
   compress: true
   nocreate: false
   dateext: true
+  # Date suffix appended to rotated log filenames when dateext is enabled
+  dateformat: ".%Y-%m-%d"
   archive_directory_path: "{{ docker_log_directory_path }}"
   copytruncate: true
 
