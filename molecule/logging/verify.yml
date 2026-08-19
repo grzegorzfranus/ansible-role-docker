@@ -96,3 +96,16 @@
           - "__logrotate_cmd.rc == 0"
         fail_msg: "logrotate configuration /etc/logrotate.d/docker is missing or failed syntax check."
         success_msg: "/etc/logrotate.d/docker exists and passed logrotate -d syntax check."
+
+    - name: Verify | Slurp /etc/logrotate.d/docker
+      ansible.builtin.slurp:
+        src: /etc/logrotate.d/docker
+      register: __logrotate_slurp
+
+    - name: Verify | Assert rendered dateformat directive
+      ansible.builtin.assert:
+        that:
+          - "'dateext' in (__logrotate_slurp.content | b64decode)"
+          - "'dateformat .%Y-%m-%d' in (__logrotate_slurp.content | b64decode)"
+        fail_msg: "Rendered logrotate configuration does not contain the expected dateformat directive"
+        success_msg: "Rendered logrotate configuration contains the expected dateformat directive"

@@ -180,6 +180,7 @@ argument_specs:
           compress: true
           nocreate: false
           dateext: true
+          dateformat: ".%Y-%m-%d"
           archive_directory_path: ""
           copytruncate: true
         options:
@@ -212,6 +213,10 @@ argument_specs:
             description: "Use date extension for rotated files"
             type: bool
             default: true
+          dateformat:
+            description: "Date suffix appended to rotated log filenames when dateext is enabled"
+            type: str
+            default: ".%Y-%m-%d"
           archive_directory_path:
             description: "Archive directory for rotated logs (defaults to docker_log_directory_path if omitted)"
             type: str

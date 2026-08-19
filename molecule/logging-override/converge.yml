@@ -34,5 +34,6 @@
           compress: true
           nocreate: false
           dateext: true
+          dateformat: "-%Y%m%d"
           archive_directory_path: "{{ docker_log_directory_path }}"
           copytruncate: false

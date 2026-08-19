@@ -208,6 +208,7 @@ Enable dedicated logging to separate Docker logs from system logs:
 | `docker_logrotate_options.nocreate` | Don't create a new empty log | `false` |
 | `docker_logrotate_options.copytruncate` | Use copytruncate to avoid reopen signaling | `true` |
 | `docker_logrotate_options.dateext` | Add date extension to rotated logs | `true` |
+| `docker_logrotate_options.dateformat` | Date suffix appended to rotated log filenames when dateext is enabled | `".%Y-%m-%d"` |
 | `docker_logrotate_options.archive_directory_path` | Archive directory for rotated logs | `"/var/log/docker"` |
 | `docker_logrotate_create.enabled` | When not using copytruncate, create a fresh file | `true` |
 | `docker_logrotate_create.mode` | New file mode (when creating) | `"0640"` |
