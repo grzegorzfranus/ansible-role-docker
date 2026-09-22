@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.5.0...v1.6.0) (2026-09-22)
+
+
+### Features
+
+* **prune:** prune unused volumes older than a configurable age ([#42](https://github.com/grzegorzfranus/ansible-role-docker/issues/42)) ([#43](https://github.com/grzegorzfranus/ansible-role-docker/issues/43)) ([b8136a7](https://github.com/grzegorzfranus/ansible-role-docker/commit/b8136a74eba1cd8b4fc60ebc6ba8cd953f74b32c))
+
 ## [1.5.0](https://github.com/grzegorzfranus/ansible-role-docker/compare/v1.4.1...v1.5.0) (2026-08-19)
 
 
