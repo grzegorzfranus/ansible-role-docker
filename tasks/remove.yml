@@ -120,6 +120,12 @@
     - /etc/systemd/system/docker-prune.service
     - /etc/systemd/system/docker-prune.timer
 
+- name: Docker | remove | Remove volume prune helper
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/sbin/docker-prune-volumes
+    state: absent
+
 - name: Docker | remove | Remove backup systemd units
   become: true
   ansible.builtin.file:

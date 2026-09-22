@@ -138,6 +138,8 @@ docker_logrotate_create:
 docker_prune_enabled: false
 docker_prune_frequency: "weekly"  # daily|weekly|monthly
 docker_prune_flags: "--force"
+docker_prune_volumes_enabled: false  # also remove unused volumes older than the minimum age
+docker_prune_volumes_min_age_hours: 24  # age a volume must reach before it may be removed
 
 # -----------------------------------------------------------------------------
 # 8. Backup Timer

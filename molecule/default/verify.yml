@@ -148,3 +148,125 @@
         fail_msg: "docker run hello-world failed: {{ __docker_hello_cmd.stderr }}"
         success_msg: "docker run hello-world executed successfully."
       when: __docker_hello_cmd.rc == 0 or 'Unable to find image' not in __docker_hello_cmd.stderr
+
+    - name: Verify | Stat docker-prune-volumes helper
+      become: true
+      ansible.builtin.stat:
+        path: /usr/local/sbin/docker-prune-volumes
+      register: __docker_prune_volumes_stat
+
+    - name: Verify | Assert docker-prune-volumes helper exists and permissions
+      ansible.builtin.assert:
+        that:
+          - __docker_prune_volumes_stat.stat.exists
+          - __docker_prune_volumes_stat.stat.pw_name == 'root'
+          - __docker_prune_volumes_stat.stat.gr_name == 'root'
+          - __docker_prune_volumes_stat.stat.mode == '0750'
+        fail_msg: "docker-prune-volumes helper is missing, not owned by root, or has incorrect mode."
+        success_msg: "docker-prune-volumes helper exists, is owned by root, and has mode 0750."
+
+    - name: Verify | Slurp docker-prune.service
+      become: true
+      ansible.builtin.slurp:
+        src: /etc/systemd/system/docker-prune.service
+      register: __docker_prune_service_slurp
+
+    - name: Verify | Assert docker-prune.service contains volume prune ExecStart
+      ansible.builtin.assert:
+        that:
+          - "'ExecStart=/usr/local/sbin/docker-prune-volumes' in (__docker_prune_service_slurp.content | b64decode)"
+        fail_msg: "docker-prune.service does not contain ExecStart=/usr/local/sbin/docker-prune-volumes."
+        success_msg: "docker-prune.service contains ExecStart=/usr/local/sbin/docker-prune-volumes."
+
+    - name: Verify | Create fresh test volume
+      become: true
+      ansible.builtin.command: docker volume create molecule-prune-fresh
+
+    - name: Verify | Run volume prune helper with default age
+      become: true
+      ansible.builtin.command: /usr/local/sbin/docker-prune-volumes
+
+    - name: Verify | Inspect fresh test volume after default prune
+      become: true
+      ansible.builtin.command: docker volume inspect molecule-prune-fresh
+      register: __docker_volume_fresh_inspect_default
+      failed_when: false
+      changed_when: false
+
+    - name: Verify | Assert fresh volume survives default age prune
+      ansible.builtin.assert:
+        that:
+          - __docker_volume_fresh_inspect_default.rc == 0
+        fail_msg: "Fresh volume was unexpectedly removed by default prune."
+        success_msg: "Fresh volume survived default prune as expected."
+
+    - name: Verify | Run volume prune helper with zero age
+      become: true
+      ansible.builtin.command: /usr/local/sbin/docker-prune-volumes 0
+
+    - name: Verify | Inspect fresh test volume after zero age prune
+      become: true
+      ansible.builtin.command: docker volume inspect molecule-prune-fresh
+      register: __docker_volume_fresh_inspect_zero
+      failed_when: false
+      changed_when: false
+
+    - name: Verify | Assert unused volume past age is removed
+      ansible.builtin.assert:
+        that:
+          - __docker_volume_fresh_inspect_zero.rc != 0
+        fail_msg: "Unused volume was not removed by zero age prune."
+        success_msg: "Unused volume was removed by zero age prune as expected."
+
+    - name: Verify | Inspect hello-world image presence
+      become: true
+      ansible.builtin.command: docker image inspect hello-world
+      register: __docker_hello_world_inspect
+      failed_when: false
+      changed_when: false
+
+    # docker create -v <name>:/data creates the named volume and attaches it. Inside the molecule
+    # container this can fail because overlayfs cannot be nested, which is also why "Test container
+    # execution" tolerates failure; the attached-volume check then runs only where a container
+    # could actually be created.
+    - name: Verify | Create container referencing attached volume
+      become: true
+      ansible.builtin.command: docker create --name molecule-prune-holder -v molecule-prune-attached:/data hello-world
+      register: __docker_prune_holder_create
+      failed_when: false
+      changed_when: false
+      when: __docker_hello_world_inspect.rc == 0
+
+    - name: Verify | Run volume prune helper with zero age for attached volume check
+      become: true
+      ansible.builtin.command: /usr/local/sbin/docker-prune-volumes 0
+      changed_when: false
+      when: __docker_prune_holder_create.rc | default(1) == 0
+
+    - name: Verify | Inspect attached test volume
+      become: true
+      ansible.builtin.command: docker volume inspect molecule-prune-attached
+      register: __docker_attached_inspect
+      failed_when: false
+      changed_when: false
+      when: __docker_prune_holder_create.rc | default(1) == 0
+
+    - name: Verify | Assert attached volume is not removed
+      ansible.builtin.assert:
+        that:
+          - __docker_attached_inspect.rc == 0
+        fail_msg: "Volume attached to stopped container was unexpectedly removed."
+        success_msg: "Volume attached to stopped container was retained as expected."
+      when: __docker_prune_holder_create.rc | default(1) == 0
+
+    - name: Verify | Cleanup test container holder
+      become: true
+      ansible.builtin.command: docker rm --force molecule-prune-holder
+      failed_when: false
+      changed_when: false
+
+    - name: Verify | Cleanup attached test volume
+      become: true
+      ansible.builtin.command: docker volume rm molecule-prune-attached
+      failed_when: false
+      changed_when: false

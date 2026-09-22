@@ -44,3 +44,5 @@
       vars:
         # Disable service restarts and augenrules execution in container test environment
         docker_manage_service_restart: false
+        docker_prune_enabled: true
+        docker_prune_volumes_enabled: true

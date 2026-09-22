@@ -227,8 +227,10 @@ creation settings.
 | `docker_prune_enabled` | Enable systemd prune timer | `false` |
 | `docker_prune_frequency` | Prune cadence (`daily`, `weekly`, `monthly`) | `"weekly"` |
 | `docker_prune_flags` | Prune flags (dangling resources only by default) | `"--force"` |
+| `docker_prune_volumes_enabled` | Also remove unused volumes older than `docker_prune_volumes_min_age_hours` (requires `docker_prune_enabled`) | `false` |
+| `docker_prune_volumes_min_age_hours` | Age in hours an unused volume must reach before it is removed | `24` |
 
-> ⚠️ **Note:** To enable aggressive pruning of all unused images and volumes, set `docker_prune_flags: "--all --volumes --force"`. Use with caution as this permanently deletes unreferenced volumes and stopped containers.
+> ⚠️ **Note:** `docker system prune` never removes volumes unless `--volumes` is in `docker_prune_flags`, and its `until` filter does not apply to volumes, so `--volumes` removes every unused volume immediately. For an age-based window, keep `--volumes` out of the flags and set `docker_prune_volumes_enabled: true`: the timer then also runs `/usr/local/sbin/docker-prune-volumes`, which removes only volumes that no container references and that are older than `docker_prune_volumes_min_age_hours`.
 
 ### Backup Timer
 

@@ -5,6 +5,23 @@
 # Configures systemd timer and service for periodic Docker system prune.
 # =============================================================================
 
+- name: Docker | prune | Deploy volume prune helper
+  become: true
+  ansible.builtin.template:
+    src: docker-prune-volumes.sh.j2
+    dest: /usr/local/sbin/docker-prune-volumes
+    owner: root
+    group: root
+    mode: '0750'
+  when: docker_prune_volumes_enabled | bool
+
+- name: Docker | prune | Remove volume prune helper when disabled
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/sbin/docker-prune-volumes
+    state: absent
+  when: not (docker_prune_volumes_enabled | bool)
+
 - name: Docker | prune | Deploy systemd service
   become: true
   ansible.builtin.template:

@@ -1,0 +1,38 @@
+#!/bin/bash
+{{ ansible_managed | comment }}
+#
+# Removes Docker volumes that no container references and that were created at least
+# MIN_AGE_HOURS ago. docker system prune cannot do this: its until filter does not apply
+# to volumes, and --volumes removes every unused volume regardless of age.
+#
+# Usage: docker-prune-volumes [MIN_AGE_HOURS]
+# MIN_AGE_HOURS defaults to {{ docker_prune_volumes_min_age_hours }}.
+set -euo pipefail
+
+min_age_hours="${1:-{{ docker_prune_volumes_min_age_hours }}}"
+if ! [[ "${min_age_hours}" =~ ^[0-9]+$ ]]; then
+  echo "docker-prune-volumes: MIN_AGE_HOURS must be a non-negative integer, got '${min_age_hours}'" >&2
+  exit 2
+fi
+
+cutoff=$(( $(date +%s) - min_age_hours * 3600 ))
+removed=0
+kept=0
+
+while IFS= read -r volume; do
+  if [[ -z "${volume}" ]]; then
+    continue
+  fi
+  created=$(docker volume inspect --format '{% raw %}{{ .CreatedAt }}{% endraw %}' "${volume}") || continue
+  created_epoch=$(date -d "${created}" +%s) || continue
+  if (( created_epoch <= cutoff )); then
+    if docker volume rm "${volume}" >/dev/null 2>&1; then
+      echo "deleted: ${volume} (created ${created})"
+      removed=$(( removed + 1 ))
+    fi
+  else
+    kept=$(( kept + 1 ))
+  fi
+done < <(docker volume ls --quiet --filter dangling=true)
+
+echo "Unused volumes removed: ${removed}, kept (younger than ${min_age_hours}h): ${kept}"

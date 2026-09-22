@@ -211,6 +211,9 @@
       - docker_prune_enabled is boolean
       - docker_prune_frequency in ['daily', 'weekly', 'monthly']
       - docker_prune_flags is string
+      - docker_prune_volumes_enabled is boolean
+      - docker_prune_volumes_min_age_hours is integer
+      - docker_prune_volumes_min_age_hours >= 0
     fail_msg: "Invalid prune settings (check frequency and flags)"
     success_msg: "Prune settings are valid"
 

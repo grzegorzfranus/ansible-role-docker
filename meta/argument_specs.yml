@@ -272,6 +272,16 @@ argument_specs:
         type: str
         default: "--force"
 
+      docker_prune_volumes_enabled:
+        description: "Also remove unused volumes older than docker_prune_volumes_min_age_hours; requires docker_prune_enabled"
+        type: bool
+        default: false
+
+      docker_prune_volumes_min_age_hours:
+        description: "Minimum age in hours before an unused volume may be removed"
+        type: int
+        default: 24
+
       # Backup
       docker_backup_enabled:
         description: "Enable systemd backup timer"
