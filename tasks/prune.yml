@@ -50,3 +50,72 @@
     name: docker-prune.timer
     enabled: true
     state: started
+
+- name: Docker | prune | Deploy disk check helper
+  become: true
+  ansible.builtin.template:
+    src: docker-prune-disk-check.sh.j2
+    dest: /usr/local/sbin/docker-prune-disk-check
+    owner: root
+    group: root
+    mode: '0750'
+  when: docker_prune_disk_threshold_enabled | bool
+
+- name: Docker | prune | Remove disk check helper when disabled
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/sbin/docker-prune-disk-check
+    state: absent
+  when: not (docker_prune_disk_threshold_enabled | bool)
+
+- name: Docker | prune | Deploy threshold systemd service
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-prune-threshold.service.j2
+    dest: /etc/systemd/system/docker-prune-threshold.service
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  notify: Docker | handlers | Reload systemd
+  when: docker_prune_disk_threshold_enabled | bool
+
+- name: Docker | prune | Deploy threshold systemd timer
+  become: true
+  ansible.builtin.template:
+    src: systemd/docker-prune-threshold.timer.j2
+    dest: /etc/systemd/system/docker-prune-threshold.timer
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  notify: Docker | handlers | Reload systemd
+  when: docker_prune_disk_threshold_enabled | bool
+
+- name: Docker | prune | Enable and start threshold timer
+  become: true
+  ansible.builtin.systemd_service:
+    name: docker-prune-threshold.timer
+    enabled: true
+    state: started
+  when: docker_prune_disk_threshold_enabled | bool
+
+- name: Docker | prune | Stop and disable threshold timer when disabled
+  become: true
+  ansible.builtin.systemd_service:
+    name: docker-prune-threshold.timer
+    state: stopped
+    enabled: false
+  failed_when: false
+  when: not (docker_prune_disk_threshold_enabled | bool)
+
+- name: Docker | prune | Remove threshold systemd units when disabled
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/docker-prune-threshold.service
+    - /etc/systemd/system/docker-prune-threshold.timer
+  notify: Docker | handlers | Reload systemd
+  when: not (docker_prune_disk_threshold_enabled | bool)

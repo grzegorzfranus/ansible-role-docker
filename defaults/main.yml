@@ -140,6 +140,14 @@ docker_prune_frequency: "weekly"  # daily|weekly|monthly
 docker_prune_flags: "--force"
 docker_prune_volumes_enabled: false  # also remove unused volumes older than the minimum age
 docker_prune_volumes_min_age_hours: 24  # age a volume must reach before it may be removed
+# Also run prune when disk usage crosses a threshold, independent of docker_prune_frequency
+docker_prune_disk_threshold_enabled: false
+# Filesystem usage percent (0-100) that triggers an out-of-schedule prune
+docker_prune_disk_threshold_percent: 80
+# Path whose filesystem usage is checked against docker_prune_disk_threshold_percent
+docker_prune_disk_threshold_path: "/"
+# Systemd OnCalendar expression for how often the disk usage check runs
+docker_prune_disk_threshold_schedule: "*:0/15"
 
 # -----------------------------------------------------------------------------
 # 8. Backup Timer

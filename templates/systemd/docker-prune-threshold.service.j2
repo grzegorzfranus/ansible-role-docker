@@ -1,0 +1,15 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{{ ansible_managed | comment }}
+[Unit]
+Description=Run Docker prune when disk usage crosses a threshold
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecCondition=/usr/local/sbin/docker-prune-disk-check
+ExecStart=/usr/bin/docker system prune {{ docker_prune_flags }}
+{% if docker_prune_volumes_enabled | bool %}
+ExecStart=/usr/local/sbin/docker-prune-volumes
+{% endif %}
+Nice=10
+IOSchedulingClass=idle
