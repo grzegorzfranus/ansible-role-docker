@@ -279,19 +279,19 @@
         fail_msg: "docker-prune-disk-check helper is missing, not owned by root, or has incorrect mode."
         success_msg: "docker-prune-disk-check helper exists, is owned by root, and has mode 0750."
 
-    - name: Verify | Run docker-prune-disk-check helper with zero threshold
+    - name: Verify | Run docker-prune-disk-check helper with a 1% threshold
       become: true
       ansible.builtin.command: /usr/local/sbin/docker-prune-disk-check
       register: __docker_prune_disk_check_run
       failed_when: false
       changed_when: false
 
-    - name: Verify | Assert disk check proceeds when threshold is zero
+    - name: Verify | Assert disk check proceeds with a 1% threshold
       ansible.builtin.assert:
         that:
           - __docker_prune_disk_check_run.rc == 0
-        fail_msg: "docker-prune-disk-check did not proceed (rc={{ __docker_prune_disk_check_run.rc }}) with a zero threshold."
-        success_msg: "docker-prune-disk-check proceeded as expected with a zero threshold."
+        fail_msg: "docker-prune-disk-check did not proceed (rc={{ __docker_prune_disk_check_run.rc }}) with a 1% threshold."
+        success_msg: "docker-prune-disk-check proceeded as expected with a 1% threshold."
 
     - name: Verify | Slurp docker-prune-threshold.service
       become: true
