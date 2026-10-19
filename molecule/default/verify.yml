@@ -262,6 +262,63 @@
     - name: Verify | Cleanup test container holder
       become: true
       ansible.builtin.command: docker rm --force molecule-prune-holder
+
+    - name: Verify | Stat docker-prune-disk-check helper
+      become: true
+      ansible.builtin.stat:
+        path: /usr/local/sbin/docker-prune-disk-check
+      register: __docker_prune_disk_check_stat
+
+    - name: Verify | Assert docker-prune-disk-check helper exists and permissions
+      ansible.builtin.assert:
+        that:
+          - __docker_prune_disk_check_stat.stat.exists
+          - __docker_prune_disk_check_stat.stat.pw_name == 'root'
+          - __docker_prune_disk_check_stat.stat.gr_name == 'root'
+          - __docker_prune_disk_check_stat.stat.mode == '0750'
+        fail_msg: "docker-prune-disk-check helper is missing, not owned by root, or has incorrect mode."
+        success_msg: "docker-prune-disk-check helper exists, is owned by root, and has mode 0750."
+
+    - name: Verify | Run docker-prune-disk-check helper with a 1% threshold
+      become: true
+      ansible.builtin.command: /usr/local/sbin/docker-prune-disk-check
+      register: __docker_prune_disk_check_run
+      failed_when: false
+      changed_when: false
+
+    - name: Verify | Assert disk check proceeds with a 1% threshold
+      ansible.builtin.assert:
+        that:
+          - __docker_prune_disk_check_run.rc == 0
+        fail_msg: "docker-prune-disk-check did not proceed (rc={{ __docker_prune_disk_check_run.rc }}) with a 1% threshold."
+        success_msg: "docker-prune-disk-check proceeded as expected with a 1% threshold."
+
+    - name: Verify | Slurp docker-prune-threshold.service
+      become: true
+      ansible.builtin.slurp:
+        src: /etc/systemd/system/docker-prune-threshold.service
+      register: __docker_prune_threshold_service_slurp
+
+    - name: Verify | Assert docker-prune-threshold.service references the disk check and prune
+      ansible.builtin.assert:
+        that:
+          - "'ExecCondition=/usr/local/sbin/docker-prune-disk-check' in (__docker_prune_threshold_service_slurp.content | b64decode)"
+          - "'ExecStart=/usr/bin/docker system prune' in (__docker_prune_threshold_service_slurp.content | b64decode)"
+        fail_msg: "docker-prune-threshold.service does not reference the disk check condition or docker system prune."
+        success_msg: "docker-prune-threshold.service references the disk check condition and docker system prune."
+
+    - name: Verify | Check docker-prune-threshold.timer is enabled
+      become: true
+      ansible.builtin.command: systemctl is-enabled docker-prune-threshold.timer
+      register: __docker_prune_threshold_timer_enabled
+      changed_when: false
+
+    - name: Verify | Assert docker-prune-threshold.timer is enabled
+      ansible.builtin.assert:
+        that:
+          - "'enabled' in __docker_prune_threshold_timer_enabled.stdout"
+        fail_msg: "docker-prune-threshold.timer is not enabled."
+        success_msg: "docker-prune-threshold.timer is enabled."
       failed_when: false
       changed_when: false
 

@@ -1,0 +1,20 @@
+#!/bin/bash
+{{ ansible_managed | comment }}
+#
+# Exit 0 when the filesystem at DISK_PATH is at or above DISK_THRESHOLD_PERCENT used,
+# so the systemd ExecCondition that calls this script lets the prune service run.
+# Exit 1 (ExecCondition "skip, not a failure") when usage is below the threshold.
+set -euo pipefail
+
+path="{{ docker_prune_disk_threshold_path }}"
+threshold={{ docker_prune_disk_threshold_percent }}
+
+usage=$(df --output=pcent "${path}" | tail -n1 | tr -dc '0-9')
+
+if (( usage >= threshold )); then
+  echo "docker-prune-disk-check: ${path} at ${usage}% (>= ${threshold}%), proceeding"
+  exit 0
+fi
+
+echo "docker-prune-disk-check: ${path} at ${usage}% (< ${threshold}%), skipping"
+exit 1

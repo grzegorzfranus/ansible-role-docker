@@ -282,6 +282,26 @@ argument_specs:
         type: int
         default: 24
 
+      docker_prune_disk_threshold_enabled:
+        description: "Also run prune when disk usage crosses a threshold, independent of docker_prune_frequency"
+        type: bool
+        default: false
+
+      docker_prune_disk_threshold_percent:
+        description: "Filesystem usage percent (0-100) that triggers an out-of-schedule prune"
+        type: int
+        default: 80
+
+      docker_prune_disk_threshold_path:
+        description: "Path whose filesystem usage is checked against docker_prune_disk_threshold_percent"
+        type: str
+        default: "/"
+
+      docker_prune_disk_threshold_schedule:
+        description: "Systemd OnCalendar expression for how often the disk usage check runs"
+        type: str
+        default: "*:0/15"
+
       # Backup
       docker_backup_enabled:
         description: "Enable systemd backup timer"

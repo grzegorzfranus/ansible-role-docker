@@ -1,0 +1,12 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{{ ansible_managed | comment }}
+[Unit]
+Description=Check disk usage and run Docker prune periodically when exceeded
+
+[Timer]
+OnCalendar={{ docker_prune_disk_threshold_schedule }}
+RandomizedDelaySec=2m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -27,6 +27,16 @@
   when:
     - ansible_facts['service_mgr'] == 'systemd'
 
+- name: Docker | remove | Stop and disable prune threshold timer
+  become: true
+  ansible.builtin.systemd_service:
+    name: docker-prune-threshold.timer
+    state: stopped
+    enabled: false
+  failed_when: false
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+
 - name: Docker | remove | Stop and disable backup timer
   become: true
   ansible.builtin.systemd_service:
@@ -124,6 +134,21 @@
   become: true
   ansible.builtin.file:
     path: /usr/local/sbin/docker-prune-volumes
+    state: absent
+
+- name: Docker | remove | Remove prune threshold systemd units
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/docker-prune-threshold.service
+    - /etc/systemd/system/docker-prune-threshold.timer
+
+- name: Docker | remove | Remove disk check helper
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/sbin/docker-prune-disk-check
     state: absent
 
 - name: Docker | remove | Remove backup systemd units

@@ -46,3 +46,8 @@
         docker_manage_service_restart: false
         docker_prune_enabled: true
         docker_prune_volumes_enabled: true
+        # Threshold of 1 guarantees the disk check always proceeds (real usage is
+        # never below 1%), so the unit's ExecCondition can be exercised
+        # deterministically in the test container.
+        docker_prune_disk_threshold_enabled: true
+        docker_prune_disk_threshold_percent: 1

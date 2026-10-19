@@ -214,6 +214,13 @@
       - docker_prune_volumes_enabled is boolean
       - docker_prune_volumes_min_age_hours is integer
       - docker_prune_volumes_min_age_hours >= 0
+      - docker_prune_disk_threshold_enabled is boolean
+      - docker_prune_disk_threshold_percent is integer
+      - docker_prune_disk_threshold_percent >= 1
+      - docker_prune_disk_threshold_percent <= 99
+      - docker_prune_disk_threshold_path is string
+      - docker_prune_disk_threshold_path is match('^/')
+      - docker_prune_disk_threshold_schedule is string
     fail_msg: "Invalid prune settings (check frequency and flags)"
     success_msg: "Prune settings are valid"
 

@@ -229,8 +229,14 @@ creation settings.
 | `docker_prune_flags` | Prune flags (dangling resources only by default) | `"--force"` |
 | `docker_prune_volumes_enabled` | Also remove unused volumes older than `docker_prune_volumes_min_age_hours` (requires `docker_prune_enabled`) | `false` |
 | `docker_prune_volumes_min_age_hours` | Age in hours an unused volume must reach before it is removed | `24` |
+| `docker_prune_disk_threshold_enabled` | Also run prune when disk usage crosses a threshold, independent of `docker_prune_frequency` | `false` |
+| `docker_prune_disk_threshold_percent` | Filesystem usage percent (0-100) that triggers an out-of-schedule prune | `80` |
+| `docker_prune_disk_threshold_path` | Path whose filesystem usage is checked against `docker_prune_disk_threshold_percent` | `"/"` |
+| `docker_prune_disk_threshold_schedule` | Systemd OnCalendar expression for how often the disk usage check runs | `"*:0/15"` |
 
 > ⚠️ **Note:** `docker system prune` never removes volumes unless `--volumes` is in `docker_prune_flags`, and its `until` filter does not apply to volumes, so `--volumes` removes every unused volume immediately. For an age-based window, keep `--volumes` out of the flags and set `docker_prune_volumes_enabled: true`: the timer then also runs `/usr/local/sbin/docker-prune-volumes`, which removes only volumes that no container references and that are older than `docker_prune_volumes_min_age_hours`.
+
+> ⚠️ **Note:** When `docker_prune_disk_threshold_enabled: true`, a dedicated `docker-prune-threshold.timer` runs frequently (default every 15 minutes via `docker_prune_disk_threshold_schedule`) and only actually prunes when disk usage at `docker_prune_disk_threshold_path` is at or above `docker_prune_disk_threshold_percent`, acting as a faster complement to the calendar-based `docker_prune_frequency` timer which stays as a safety-net floor.
 
 ### Backup Timer
 
